@@ -14,7 +14,7 @@ export function ApiStatusBanner() {
     );
   }
 
-  if (authMode === 'vk_no_backend' && authMessage) {
+  if ((authMode === 'auth_failed' || authMode === 'vk_no_backend') && authMessage) {
     return (
       <div className="api-banner" role="status">
         {authMessage}

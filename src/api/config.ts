@@ -1,4 +1,4 @@
-import { isVkClientEnvironment } from '../vk/vkBootstrap';
+import { isMiniAppEnvironment } from '../platform/detectPlatform';
 
 const rawDefault = 'https://serg.srvmysticode.ru';
 const rawEnv = (import.meta.env.VITE_API_BASE as string | undefined) ?? rawDefault;
@@ -13,8 +13,8 @@ export const DOCS_URL = 'https://serg.srvmysticode.ru/docs/#/';
  * Сеть к API:
  * - `VITE_ENABLE_BACKEND=true` — всегда включено;
  * - `VITE_ENABLE_BACKEND=false` — всегда выключено (только UI);
- * - иначе: в клиенте VK Mini App включаем автоматически (чтобы не забыть флаг при сборке).
- * Вне VK для продакшена задайте `VITE_ENABLE_BACKEND=true` в `.env` при сборке.
+ * - иначе: в VK или Telegram Mini App включаем автоматически.
+ * Вне мини-приложений для продакшена задайте `VITE_ENABLE_BACKEND=true` в `.env` при сборке.
  */
 export function isBackendEnabled(): boolean {
   const v = import.meta.env.VITE_ENABLE_BACKEND;
@@ -22,7 +22,7 @@ export function isBackendEnabled(): boolean {
   if (v === 'true') return true;
   if (typeof window !== 'undefined') {
     try {
-      return isVkClientEnvironment();
+      return isMiniAppEnvironment();
     } catch {
       return false;
     }

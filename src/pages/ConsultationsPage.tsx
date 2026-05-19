@@ -539,7 +539,11 @@ export function ConsultationsPage() {
 
           {apiOn && (
             <p className="consult-footnote">
-              {!token && authMode !== 'dev_token' && authMode !== 'vk_token' && authMode !== 'idle' ? (
+              {!token &&
+              authMode !== 'dev_token' &&
+              authMode !== 'vk_token' &&
+              authMode !== 'tg_token' &&
+              authMode !== 'idle' ? (
                 <>Войдите через VK для заявки и оплаты.</>
               ) : token ? (
                 <>После формы — оплата картой. Чек на email.</>

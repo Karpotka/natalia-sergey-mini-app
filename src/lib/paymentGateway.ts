@@ -1,4 +1,5 @@
 import vkBridge from '@vkontakte/vk-bridge';
+import { isTelegramMiniAppEnvironment } from '../telegram/telegramBootstrap';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -74,8 +75,32 @@ export async function openVkOrderPayment(raw: unknown): Promise<{ ok: true } | {
  * Открывает внешнюю оплату (ЮKassa и т.п.).
  * В VK WebView на телефоне `window.open` часто блокируется — используем VKWebAppOpenURL.
  */
+function openTelegramInvoice(url: string): Promise<{ ok: true } | { error: string }> {
+  const tg = window.Telegram?.WebApp;
+  if (!tg?.openInvoice) return Promise.resolve({ error: 'Telegram WebApp недоступен.' });
+
+  return new Promise((resolve) => {
+    try {
+      tg.openInvoice(url, (status) => {
+        if (status === 'paid') resolve({ ok: true });
+        else if (status === 'cancelled') resolve({ error: 'Оплата отменена.' });
+        else if (status === 'failed') resolve({ error: 'Оплата не прошла.' });
+        else resolve({ error: 'Оплата не завершена.' });
+      });
+    } catch (e) {
+      resolve({ error: e instanceof Error ? e.message : 'Не удалось открыть оплату Telegram.' });
+    }
+  });
+}
+
 export async function openPaymentInvoiceUrl(url: string): Promise<{ ok: true } | { error: string }> {
   if (!url || !/^https?:\/\//i.test(url)) return { error: 'Некорректная ссылка на оплату.' };
+
+  if (isTelegramMiniAppEnvironment() && /t\.me\//i.test(url)) {
+    const tgResult = await openTelegramInvoice(url);
+    if ('ok' in tgResult && tgResult.ok) return tgResult;
+    /* fallback — открыть ссылку в WebView */
+  }
 
   if (isVkMiniAppWebView()) {
     try {
