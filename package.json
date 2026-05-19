@@ -1,0 +1,42 @@
+{
+  "name": "natalia-sergey-mini-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "homepage": "./",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite --host --port 5173 --open",
+    "dev:host": "vite --host",
+    "build": "tsc -b && vite build",
+    "prune:phases": "node scripts/keep-only-gray-moon.mjs",
+    "build:vk": "npm run prune:phases && npm run build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "tunnel": "vk-tunnel --insecure=1 --http-protocol=http --ws-protocol=ws --host=0.0.0.0 --port=5173",
+    "deploy:vk": "npm run build:vk && vk-miniapps-deploy"
+  },
+  "dependencies": {
+    "@vkontakte/vk-bridge": "^2.15.11",
+    "astronomy-engine": "^2.1.19",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^7.14.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^24.12.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vkontakte/vk-miniapps-deploy": "^1.0.2",
+    "@vkontakte/vk-tunnel": "^0.2.10",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.5.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.58.2",
+    "vite": "^8.0.9"
+  }
+}

@@ -1,0 +1,89 @@
+Деплой мини-приложения на хостинг VK (CDN)
+========================================
+
+1) Создайте мини-приложение в VK
+   - https://dev.vk.ru/ → Мини-приложения → создать приложение
+   - Возьмите числовой ID приложения (app_id)
+
+2) Укажите app_id в файле vk-hosting-config.json
+   Замените 0 на ваш ID, например: "app_id": 123456789
+
+3) Переменные окружения для подписки (списание астрокоинов через POST /subscribe/buy)
+   В корне проекта скопируйте .env.example → .env и заполните числами product_id с бэкенда:
+     VITE_SUBSCRIPTION_PRODUCT_ID_WEEK
+     VITE_SUBSCRIPTION_PRODUCT_ID_MONTH
+     VITE_SUBSCRIPTION_PRODUCT_ID_YEAR
+   Они встраиваются в клиент только на этапе сборки (npm run build / build:vk).
+   Если собираете в CI — задайте те же имена в секретах пайплайна перед vite build.
+
+4) Соберите статику (для VK сразу обрезаем public/moon/phases до gray_mb* — иначе VK: «15 invalid file»)
+   cd "/Users/mariakarpuhina/Desktop/Приложения/Natalia_Sergey mini app"
+   npm install
+   npm run build:vk
+   (или вручную: npm run prune:phases && npm run build)
+
+   Восстановить все картинки из Assets в phases: скопируйте папку phases из deluxe-moon-twa снова в public/moon/phases
+
+5) Залейте на хостинг VK
+   Вариант А (интерактивно, первый раз):
+     npx vk-miniapps-deploy
+   Откроется авторизация VK и загрузка папки dist/
+
+   Вариант Б (токен, удобно для CI / повторов):
+     export MINI_APPS_ACCESS_TOKEN="ваш_токен"
+     export MINI_APPS_ENVIRONMENT=production
+     npx vk-miniapps-deploy
+
+   Токен: сервисный ключ приложения с правами на загрузку (см. кабинет VK / документацию deploy).
+
+6) В настройках мини-приложения VK укажите URL с хостинга
+   После деплоя VK выдаст адрес вида *.vk-apps.com — его нужно прописать в настройках приложения (адрес мини-приложения).
+
+7) Как делиться ссылкой с пользователями (ВАЖНО)
+   Правильно: https://vk.com/app54570453 (или кнопка «Открыть» в сообществе / раздел «Сервисы» в приложении VK).
+   Неправильно: прямая ссылка на *.vk-apps.com в Safari / Telegram — откроется как обычный сайт в браузере, без VK Bridge и входа.
+   На разных iPhone разница не в модели iPhone, а в способе запуска (см. п. 8 — ODR).
+
+8) iOS: ODR (On-Demand Resources) — нативный контейнер VK Mini Apps
+   ─────────────────────────────────────────────────────────────────
+   Симптом: на части iPhone приложение открывается как m.vk.com во встроенном браузере VK,
+   а не в «нормальном» мини-приложении (нет полноценного VK Bridge, другой UI).
+
+   Причина: без настроенного ODR VK на iOS может запускать мини-приложение через mobile web-обёртку,
+   даже при правильной ссылке https://vk.com/app54570453
+
+   Это НЕ лечится JavaScript на фронте. Нужны настройки в кабинете VK + ODR-архив.
+
+   Чеклист в кабинете (https://vk.com/apps?act=manage → приложение 54570453):
+   [ ] Раздел ODR / iOS ODR найден и открыт
+   [ ] Заполнены данные Apple Developer (Team ID, Bundle ID — как просит форма VK)
+   [ ] Загружен ZIP-архив ODR (см. ниже)
+   [ ] Для всех пользователей: архив прошёл модерацию VK (для админов/тестеров часто доступен сразу)
+
+   Сборка ODR-совместимого архива (этот проект):
+     npm run deploy:vk
+   (= npm run build:vk && vk-miniapps-deploy)
+
+   Утилита @vkontakte/vk-miniapps-deploy заливает dist/ на хостинг VK и формирует архив,
+   который в актуальных шаблонах VK совместим с ODR. app_id уже в vk-hosting-config.json: 54570453.
+
+   Требования к архиву (проверьте до загрузки в ODR):
+   - index.html открывается локально (base: './' в vite.config — уже так)
+   - нет жёстких абсолютных путей /assets/... без учёта base
+   - после deploy:vk в dist/ есть index.html и папка assets/
+
+   После включения ODR: проверьте на 2–3 разных iPhone из VK (не Safari):
+   Сервисы → ваше приложение, или vk.com/app54570453
+
+   Документация VK (когда доступна):
+   https://dev.vk.com/ru/mini-apps/development/on-demand-resources
+
+Официально (хостинг): https://dev.vk.ru/mini-apps/development/hosting/overview
+
+Ошибка "invalid session":
+   rm ~/.config/configstore/@vkontakte/vk-miniapps-deploy.json
+   и снова npx vk-miniapps-deploy
+
+Локальная проверка внутри VK без деплоя:
+   npm run tunnel
+   (в настройках мини-приложения временно укажите URL туннеля)

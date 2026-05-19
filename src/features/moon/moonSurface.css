@@ -1,0 +1,1760 @@
+.moon-root {
+  min-height: min-content;
+  padding-bottom: 8px;
+  color: var(--celestial-text, #f5f7fa);
+  position: relative;
+  overflow-x: hidden;
+  /* Прозрачно — фон home-bg.png на .shell--celestial-bg */
+  background: transparent;
+}
+
+/* На главной звёзды уже на фоновой картинке — не дублируем */
+.moon-root > .stars {
+  display: none;
+}
+
+.stars {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: min(100vh, 100dvh);
+  max-height: 100dvh;
+  z-index: 0;
+  background-image:
+    radial-gradient(1.4px 1.4px at 8% 14%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(1px 1px at 72% 28%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.2px 1.2px at 38% 8%, rgba(212, 175, 55, 0.45), transparent),
+    radial-gradient(1px 1px at 92% 18%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 18% 72%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 58% 82%, rgba(212, 175, 55, 0.3), transparent),
+    radial-gradient(1.2px 1.2px at 82% 68%, rgba(255, 255, 255, 0.38), transparent);
+  background-size: 100% 100%;
+  opacity: 0.85;
+  animation: stars-twinkle 8s ease-in-out infinite alternate;
+}
+
+.stars::before,
+.stars::after {
+  content: '';
+  position: absolute;
+  inset: -10%;
+  pointer-events: none;
+  background-repeat: repeat;
+}
+
+.stars::before {
+  background-image:
+    radial-gradient(1.6px 1.6px, rgba(255, 255, 255, 0.26) 65%, transparent 70%),
+    radial-gradient(1px 1px, rgba(167, 243, 208, 0.26) 60%, transparent 70%);
+  background-size:
+    140px 140px,
+    180px 180px;
+  background-position:
+    20px 10px,
+    75px 45px;
+  opacity: 0.42;
+  animation: stars-drift-slow 38s linear infinite;
+}
+
+.stars::after {
+  background-image:
+    radial-gradient(1.4px 1.4px, rgba(196, 181, 253, 0.28) 60%, transparent 70%),
+    radial-gradient(0.9px 0.9px, rgba(255, 255, 255, 0.22) 60%, transparent 70%);
+  background-size:
+    120px 120px,
+    160px 160px;
+  background-position:
+    35px 90px,
+    10px 25px;
+  opacity: 0.34;
+  animation: stars-drift-fast 24s linear infinite reverse;
+}
+
+@keyframes stars-twinkle {
+  0% {
+    opacity: 0.56;
+  }
+  100% {
+    opacity: 0.84;
+  }
+}
+
+@keyframes stars-drift-slow {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(-18px, -10px, 0) scale(1.02);
+  }
+}
+
+@keyframes stars-drift-fast {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(26px, 16px, 0);
+  }
+}
+
+/*
+ * На тач и узких экранах: без анимаций звёзд/орбиты, слабее blur.
+ * screen только на слоях луны внутри чёрного диска (не на всём stack при скролле панели).
+ */
+@media (pointer: coarse), (max-width: 520px) {
+  .stars,
+  .stars::before,
+  .stars::after {
+    animation: none;
+  }
+
+  .moon-orbit-ring {
+    animation: none;
+  }
+
+  .moon-phase-loading {
+    animation: none;
+    opacity: 0.8;
+  }
+
+  /* screen на слоях внутри чёрного диска — не на всём stack (меньше нагрузка при скролле) */
+  .moon-phase-frame--blend .moon-phase-layer,
+  .moon-phase-frame--blend .moon-phase-fallback-img {
+    mix-blend-mode: screen;
+    filter: brightness(1.22) contrast(1.08) saturate(1.04);
+  }
+
+  .moon-glow {
+    filter: blur(8px);
+  }
+
+  .moon-section--hero .moon-glow {
+    filter: blur(7px);
+    width: min(40vw, 128px);
+    height: min(40vw, 128px);
+    animation: moon-hero-glow-pulse-mobile 2s ease-in-out infinite;
+  }
+
+  /* Не обрезать blur/box-shadow у героя у края экрана (колонка справа). */
+  .product-panel.product-panel--moon,
+  .moon-root {
+    overflow-x: visible;
+  }
+
+  .home-hero-moon {
+    overflow: visible;
+    transform: translateX(-10px);
+    padding: 4px 10px 4px 6px;
+  }
+
+  .moon-section.moon-section--hero {
+    overflow: visible;
+  }
+
+  .moon-section--hero .moon-phase-frame {
+    animation: moon-hero-frame-pulse-mobile 2s ease-in-out infinite;
+  }
+
+  .home-quick-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+}
+
+@keyframes moon-hero-glow-pulse-mobile {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: translate(-50%, -52%) scale(0.92);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -52%) scale(1.05);
+  }
+}
+
+@keyframes moon-hero-frame-pulse-mobile {
+  0%,
+  100% {
+    box-shadow:
+      0 6px 22px rgba(0, 0, 0, 0.34),
+      0 0 18px rgba(201, 165, 74, 0.32),
+      0 0 32px rgba(232, 196, 120, 0.18);
+  }
+
+  50% {
+    box-shadow:
+      0 6px 22px rgba(0, 0, 0, 0.28),
+      0 0 28px rgba(201, 165, 74, 0.62),
+      0 0 48px rgba(232, 196, 120, 0.38),
+      0 0 60px rgba(255, 224, 160, 0.2);
+  }
+}
+
+.moon-product-title {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 6px;
+  padding: 0 18px;
+  font-family: var(--font-display, serif);
+  font-size: clamp(1.45rem, 5vw, 1.75rem);
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--premium-champagne, #e8dcc8);
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+}
+
+.main-screen {
+  position: relative;
+  z-index: 2;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 12px 16px 8px;
+}
+
+.main-screen--home {
+  max-width: min(420px, 100%);
+  padding: 10px 18px 12px;
+}
+
+/* ——— Полноэкранная Луна (кнопка «нажми на меня») ——— */
+.moon-immersive-root {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  box-sizing: border-box;
+  background-color: var(--celestial-bg-deep, #050c1c);
+  color: var(--premium-cream, #f7f3eb);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Лёгкое затемнение поверх home-bg.png — читаемость UI */
+.moon-immersive-root::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 12, 28, 0.2) 0%,
+    rgba(5, 12, 28, 0.45) 55%,
+    rgba(5, 12, 28, 0.62) 100%
+  );
+}
+
+.moon-immersive-root > .app-bg-image {
+  z-index: 0;
+}
+
+.moon-immersive-stars {
+  display: none;
+}
+
+.moon-immersive-close {
+  position: relative;
+  z-index: 2;
+  align-self: flex-start;
+  margin-bottom: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(201, 165, 74, 0.28);
+  background: rgba(8, 6, 14, 0.75);
+  color: rgba(250, 246, 239, 0.92);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.moon-immersive-close:hover {
+  background: rgba(201, 165, 74, 0.12);
+}
+
+.moon-immersive-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.moon-immersive-body--scroll {
+  justify-content: flex-start;
+  align-items: stretch;
+  /* Не задаём overflow-y: вложенный scrollport обрезал blur/box-shadow ореола над диском. */
+  overflow: visible;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.home-moon-cal-enter--immersive {
+  width: 100%;
+  max-width: 22rem;
+  margin: 4px auto 12px;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+.moon-section--immersive {
+  /* Запас под ореол + blur (.moon-glow), иначе верх обрезается у вложенного overflow. */
+  padding: clamp(20px, 6vw, 48px) clamp(8px, 3vw, 20px) 16px;
+  overflow: visible;
+}
+
+.moon-glow--immersive {
+  width: min(72vw, 280px);
+  height: min(72vw, 280px);
+}
+
+.moon-hint--immersive {
+  text-align: center;
+  max-width: 22rem;
+  margin: 4px auto 12px;
+}
+
+.datetime-row--immersive {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 4px;
+}
+
+/* ——— Главная: Celestial Dark (референс: navy + золотые рамки) ——— */
+.home-top-bar {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.home-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0a0e1a;
+  background: linear-gradient(145deg, #f5e6b8, var(--celestial-gold, #d4af37));
+  border: 1px solid var(--celestial-gold-border-strong, rgba(212, 175, 55, 0.62));
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+.home-greeting {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--celestial-text, #f5f7fa);
+  text-align: left;
+  min-width: 0;
+}
+
+.home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 10px;
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  position: relative;
+  overflow: visible;
+}
+
+.home-hero-copy {
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  text-align: left;
+}
+
+.home-hero-title {
+  margin: 0;
+  font-family: var(--font-display, serif);
+  font-size: clamp(1.3rem, 4.6vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: 0.02em;
+  color: var(--celestial-text, #f5f7fa);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
+}
+
+.home-hero-moon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+/* Подпись под луной: не кнопка, луна сама открывает полноэкранный режим. */
+.home-moon-caption {
+  margin: 0;
+  padding: 0 4px;
+  max-width: 11rem;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+  color: rgba(245, 247, 250, 0.72);
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.28);
+  user-select: none;
+  pointer-events: none;
+}
+
+.home-hero-moon .home-moon-caption {
+  animation: moon-hero-caption-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-moon .home-moon-caption {
+    animation: none;
+  }
+}
+
+.home-section-title {
+  margin: 0 0 12px;
+  font-family: var(--font-ui, sans-serif);
+  font-size: 1.12rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--celestial-text, #f5f7fa);
+}
+
+.home-today {
+  margin-bottom: 24px;
+}
+
+.home-today-card {
+  border-radius: var(--celestial-radius-lg, 22px);
+  padding: 0;
+  border: 1px solid var(--celestial-gold-border, rgba(212, 175, 55, 0.42));
+  background: linear-gradient(165deg, rgba(10, 22, 48, 0.96) 0%, rgba(5, 12, 28, 0.98) 100%);
+  box-shadow: var(--celestial-shadow-card, 0 20px 48px rgba(0, 0, 0, 0.45));
+}
+
+.home-today-inner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 18px 18px 20px;
+  border-radius: inherit;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.home-today-moon-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  border-radius: 14px;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid var(--celestial-gold-border, rgba(212, 175, 55, 0.42));
+}
+
+.home-today-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.home-today-moon-line {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: rgba(253, 248, 250, 0.96);
+}
+
+.home-today-tags {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: var(--celestial-gold, #d4af37);
+}
+
+.home-today-desc {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(232, 226, 216, 0.78);
+}
+
+.home-read-forecast-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  color: #0a0e1a;
+  background: var(--celestial-btn-gradient, linear-gradient(118deg, #f5e6b8 0%, #d4af37 50%, #9a7c28 100%));
+  box-shadow: var(--celestial-btn-shadow, 0 8px 24px rgba(212, 175, 55, 0.28));
+  touch-action: manipulation;
+}
+
+.home-read-forecast-btn:hover {
+  filter: brightness(1.06);
+}
+
+.home-quick-section-title {
+  margin: 0 0 14px;
+  font-family: var(--font-display, 'Cormorant Garamond', serif);
+  font-size: clamp(1.08rem, 3.8vw, 1.28rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--celestial-gold, #d4af37);
+}
+
+.home-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 380px) {
+  .home-quick-grid {
+    gap: 6px;
+  }
+
+  .home-quick-card {
+    padding: 8px 3px 9px;
+    border-radius: 12px;
+    min-height: 100px;
+  }
+
+  .home-quick-icon {
+    min-height: 58px;
+    padding: 2px 0 0;
+  }
+
+  .home-quick-icon-img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .home-quick-label {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+
+  .home-quick-section-title {
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+}
+
+.home-quick {
+  margin-bottom: 4px;
+}
+
+.home-quick-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  min-height: 112px;
+  aspect-ratio: 3 / 4.1;
+  padding: 10px 4px 9px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 175, 55, 0.72);
+  background: rgba(18, 34, 64, 0.55);
+  color: var(--celestial-gold, #d4af37);
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+  touch-action: manipulation;
+  box-shadow: inset 0 1px 0 rgba(255, 252, 245, 0.06);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.15s ease;
+}
+
+.home-quick-card:hover {
+  background: rgba(24, 44, 82, 0.68);
+  border-color: rgba(232, 197, 71, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 252, 245, 0.08),
+    0 0 0 1px rgba(212, 175, 55, 0.12);
+}
+
+.home-quick-card:active {
+  transform: scale(0.98);
+}
+
+.home-quick-icon {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 64px;
+  margin: 0;
+  padding: 4px 2px 0;
+  line-height: 0;
+  color: var(--celestial-gold, #d4af37);
+}
+
+.home-quick-icon-img {
+  display: block;
+  width: min(92%, 56px);
+  height: 56px;
+  max-width: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.home-quick-label {
+  flex-shrink: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0 2px;
+  font-family: var(--font-display, 'Cormorant Garamond', serif);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: 0.06em;
+  color: var(--celestial-gold, #d4af37);
+  display: block;
+  overflow: visible;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.home-moon-cal-enter {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.home-enter-moon-btn {
+  width: 100%;
+  max-width: 22rem;
+  margin: 0 auto;
+  display: block;
+  border: 1px solid rgba(201, 165, 74, 0.4);
+  border-radius: 16px;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  color: rgba(253, 248, 250, 0.96);
+  background: rgba(201, 165, 74, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  touch-action: manipulation;
+}
+
+.home-enter-moon-btn:hover {
+  background: rgba(201, 165, 74, 0.2);
+  border-color: rgba(232, 196, 120, 0.55);
+}
+
+.home-enter-moon-lead {
+  margin: 10px auto 0;
+  max-width: 24rem;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(232, 226, 216, 0.55);
+}
+
+.home-moon-detail-head {
+  margin-bottom: 14px;
+}
+
+.home-moon-detail-back {
+  border: none;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  color: rgba(232, 196, 120, 0.95);
+  background: rgba(255, 255, 255, 0.06);
+  touch-action: manipulation;
+}
+
+.home-moon-detail-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.moon-hint--home {
+  margin-top: 0;
+}
+
+@media (max-width: 360px) {
+  .home-hero-title {
+    font-size: clamp(1.2rem, 5.2vw, 1.45rem);
+  }
+}
+
+.moon-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* pan-y отдавал вертикальный скролл родителю и ломал горизонтальный drag на телефоне */
+  touch-action: none;
+  cursor: grab;
+  padding: 12px 0 20px;
+}
+
+.moon-section:active {
+  cursor: grabbing;
+}
+
+/* Герой на главной: после общего .moon-section, иначе перетираются padding и визуальный размер луны «уплывает». */
+.moon-section.moon-section--hero {
+  padding: 2px 0 6px;
+  width: fit-content;
+  max-width: min(112px, 36vw);
+  margin-inline: auto;
+  box-sizing: border-box;
+  cursor: pointer;
+  border-radius: 50%;
+  outline: none;
+  /* Горизонталь — смена времени (capture после порога в JS); вертикаль — скролл панели. */
+  touch-action: none;
+}
+
+.moon-section.moon-section--hero:focus-visible {
+  box-shadow: 0 0 0 2px rgba(201, 165, 74, 0.55), 0 0 0 5px rgba(201, 165, 74, 0.18);
+}
+
+@keyframes moon-hero-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: translate(-50%, -52%) scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -52%) scale(1.12);
+  }
+}
+
+@keyframes moon-hero-caption-pulse {
+  0%,
+  100% {
+    opacity: 0.48;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes moon-hero-frame-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 6px 22px rgba(0, 0, 0, 0.34),
+      0 0 20px rgba(201, 165, 74, 0.32),
+      0 0 40px rgba(232, 196, 120, 0.18);
+  }
+
+  50% {
+    box-shadow:
+      0 6px 22px rgba(0, 0, 0, 0.28),
+      0 0 36px rgba(201, 165, 74, 0.72),
+      0 0 68px rgba(232, 196, 120, 0.48),
+      0 0 96px rgba(255, 224, 160, 0.28);
+  }
+}
+
+/* Ореол под диск (базовый .moon-glow до 94vw — иначе только свечение меняется, диск визуально «огромный»). */
+.moon-section--hero .moon-glow {
+  width: min(48vw, 158px);
+  height: min(48vw, 158px);
+  filter: blur(14px);
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 248, 220, 0.78) 0%, rgba(212, 175, 55, 0.35) 28%, transparent 50%),
+    radial-gradient(circle at 64% 56%, rgba(255, 214, 140, 0.58) 0%, rgba(212, 175, 55, 0.28) 36%, transparent 54%),
+    radial-gradient(circle at 50% 50%, rgba(168, 140, 220, 0.48) 0%, transparent 60%);
+  opacity: 0.85;
+  animation: moon-hero-glow-pulse 2s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moon-section--hero .moon-glow {
+    animation: none;
+    opacity: 0.95;
+    transform: translate(-50%, -52%) scale(1);
+    will-change: auto;
+  }
+
+  .moon-section--hero .moon-phase-frame {
+    animation: none;
+    box-shadow:
+      0 6px 22px rgba(0, 0, 0, 0.32),
+      0 0 28px rgba(201, 165, 74, 0.42),
+      0 0 52px rgba(232, 196, 120, 0.28),
+      0 0 72px rgba(255, 230, 180, 0.12);
+  }
+
+  @media (pointer: coarse), (max-width: 520px) {
+    .moon-section--hero .moon-glow {
+      width: min(40vw, 128px);
+      height: min(40vw, 128px);
+    }
+
+    .home-hero-moon {
+      transform: translateX(-10px);
+    }
+  }
+}
+
+.moon-section--hero .moon-phase-frame {
+  animation: moon-hero-frame-pulse 2s ease-in-out infinite;
+}
+
+.moon-section--hero .moon-phase-layer,
+.moon-section--hero .moon-phase-fallback-img {
+  transform: scale(1.02);
+}
+
+.moon-orbit-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(98vw, 360px);
+  height: min(98vw, 360px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px dashed rgba(201, 165, 74, 0.22);
+  pointer-events: none;
+  z-index: 0;
+  animation: moon-orbit-spin 90s linear infinite;
+}
+
+.moon-orbit-ring::after {
+  content: '';
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  border: 1px solid rgba(184, 163, 232, 0.14);
+}
+
+@keyframes moon-orbit-spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.moon-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -52%);
+  width: min(94vw, 360px);
+  height: min(94vw, 360px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 32%, rgba(201, 165, 74, 0.14) 0%, transparent 42%),
+    radial-gradient(circle at 58% 54%, rgba(184, 163, 232, 0.22) 0%, transparent 48%),
+    radial-gradient(circle at 50% 50%, rgba(125, 199, 192, 0.1) 0%, transparent 68%);
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Тень снаружи: не на том же слое, что mix-blend-mode (иначе артефакты). */
+.moon-phase-frame {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  line-height: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.28),
+    0 0 32px rgba(201, 165, 74, 0.12);
+}
+
+/*
+ * Кадры gray_mb* — RGB на чёрном. screen на слоях + чёрный диск в stack:
+ * чёрный PNG исчезает, луна видна и на мобильных (без blend всего stack при скролле).
+ */
+.moon-phase-frame--blend .moon-phase-stack,
+.moon-phase-frame--blend .moon-phase-fallback {
+  mix-blend-mode: normal;
+  filter: none;
+}
+
+.moon-phase-stack {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #000;
+}
+
+.moon-phase-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.moon-phase-loading--overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.moon-phase-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  transform: scale(1.06);
+  transform-origin: center center;
+  mix-blend-mode: screen;
+  filter: brightness(1.18) contrast(1.06) saturate(1.04);
+}
+
+.moon-phase-frame:not(.moon-phase-frame--blend) .moon-phase-layer {
+  transform: none;
+}
+
+.moon-phase-fallback {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #000;
+}
+
+.moon-phase-fallback-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transform: scale(1.06);
+  transform-origin: center center;
+  mix-blend-mode: normal;
+}
+
+.moon-phase-frame:not(.moon-phase-frame--blend) .moon-phase-fallback-img {
+  transform: none;
+}
+
+.moon-phase-loading {
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    rgba(110, 105, 130, 0.55) 0%,
+    rgba(36, 30, 48, 0.82) 52%,
+    rgba(14, 12, 22, 0.92) 100%
+  );
+  animation: moon-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes moon-pulse {
+  50% {
+    opacity: 0.72;
+  }
+}
+
+.moon-hint {
+  display: inline-block;
+  align-self: center;
+  margin: clamp(8px, 2.5vw, 16px) auto 12px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  line-height: 1.45;
+  text-align: center;
+  color: rgba(232, 226, 216, 0.82);
+  /* Без backdrop-filter — при вертикальном скролле размытие даёт заметные фризы на мобильных. */
+  background: rgba(14, 11, 20, 0.92);
+  border: 1px solid rgba(201, 165, 74, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.datetime-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 14px 16px;
+  min-height: 48px;
+  box-sizing: border-box;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 252, 245, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 36px rgba(0, 0, 0, 0.35);
+  max-width: min(340px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  background: linear-gradient(165deg, rgba(32, 28, 40, 0.96) 0%, rgba(8, 6, 14, 0.96) 100%);
+}
+
+.datetime-text {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0 4px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.datetime-segment {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  max-width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  border-radius: 10px;
+}
+
+.datetime-segment .datetime-pick {
+  pointer-events: none;
+  position: relative;
+  z-index: 0;
+}
+
+/* Реальные date/time поверх подписи: тап = нативный picker (в т.ч. VK / iOS). */
+.datetime-native-input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: transparent;
+  opacity: 0.01;
+  cursor: pointer;
+  font-size: 16px;
+  min-height: 44px;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: rgba(201, 165, 74, 0.12);
+}
+
+.datetime-native-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.datetime-date {
+  flex: 0 1 auto;
+}
+
+.datetime-date--period {
+  flex: 1 1 auto;
+  max-width: 100%;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.datetime-sep {
+  opacity: 0.4;
+  padding: 0 2px;
+  font-weight: 400;
+}
+
+.datetime-time {
+  color: #d4c4a8;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.datetime-pick {
+  margin: 0;
+  padding: 2px 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  text-align: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
+  -webkit-tap-highlight-color: rgba(201, 165, 74, 0.15);
+}
+
+.datetime-segment:hover .datetime-pick {
+  background: rgba(201, 165, 74, 0.12);
+  border-radius: 8px;
+}
+
+.datetime-segment:focus-within {
+  box-shadow: 0 0 0 2px rgba(201, 165, 74, 0.45);
+}
+
+.datetime-pick.datetime-time {
+  color: #d4c4a8;
+  font-weight: 600;
+}
+
+.icon-refresh {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  align-self: center;
+  border-radius: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23d4b87a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'/%3E%3C/svg%3E");
+  background-size: contain;
+  opacity: 0.95;
+  transition: opacity 0.15s ease, transform 0.2s ease;
+}
+
+.icon-refresh:hover {
+  opacity: 1;
+  transform: rotate(-35deg);
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 5px;
+  border-radius: 22px;
+  background: linear-gradient(
+    155deg,
+    rgba(184, 163, 232, 0.1) 0%,
+    rgba(32, 28, 42, 0.55) 45%,
+    rgba(201, 165, 74, 0.06) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 252, 245, 0.08),
+    0 24px 56px rgba(0, 0, 0, 0.42);
+}
+
+.dash-col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  padding: 14px 10px 16px;
+  border-radius: 17px;
+  background: rgba(8, 6, 14, 0.94);
+  border: 1px solid rgba(255, 252, 245, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: visible;
+}
+
+.dash-mode-label {
+  display: block;
+  width: 100%;
+  margin-bottom: 2px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.25;
+  color: rgba(201, 165, 74, 0.55);
+}
+
+.dash-stack {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.zodiac-mini {
+  font-size: 24px;
+  line-height: 1;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.15));
+}
+
+.dash-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.dash-caption {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(232, 226, 216, 0.45);
+}
+
+.gauge-ring-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+}
+
+.gauge-ring {
+  display: block;
+}
+
+.gauge-ring-inner {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.gauge-ring-bg {
+  stroke: rgba(255, 252, 245, 0.1);
+}
+
+.gauge-ring-fg {
+  stroke: #c9a54a;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 10px rgba(201, 165, 74, 0.35));
+}
+
+.gauge-num {
+  font-family: var(--font-display, serif);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: #fff9f0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.gauge-zodiac {
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0.92;
+  margin-top: 2px;
+}
+
+.dash-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.dotted-circle {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(201, 165, 74, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.dotted-circle span {
+  display: block;
+  line-height: 1;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-foot {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232, 226, 216, 0.38);
+  text-align: center;
+  max-width: 100px;
+  line-height: 1.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stars {
+    animation: none;
+  }
+
+  .stars::before,
+  .stars::after {
+    animation: none;
+  }
+
+  .moon-orbit-ring {
+    animation: none;
+  }
+
+  .icon-refresh:hover {
+    transform: none;
+  }
+
+  .moon-slide-arrow--next:hover:not(:disabled),
+  .moon-slide-arrow--prev:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ——— Карусель: дашборд + справочник по шагам ——— */
+.moon-slide-deck {
+  margin-top: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.moon-slide-row {
+  display: grid;
+  grid-template-columns: clamp(40px, 11vw, 48px) minmax(0, 1fr) clamp(40px, 11vw, 48px);
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+/** Боковые колонки под стрелку и симметричный отступ слева */
+.moon-slide-side {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.moon-slide-viewport {
+  min-width: 0;
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.moon-slide-panels.moon-calendar-panels {
+  margin-top: 0;
+}
+
+.moon-slide-arrow {
+  width: 40px;
+  min-height: 40px;
+  border-radius: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  background-color: rgba(201, 165, 74, 0.12);
+  border: 1px solid rgba(201, 165, 74, 0.24);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 22px;
+  transition: background-color 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.moon-slide-arrow:hover {
+  background-color: rgba(201, 165, 74, 0.2);
+  border-color: rgba(201, 165, 74, 0.35);
+}
+
+.moon-slide-arrow--next:hover:not(:disabled) {
+  transform: translateX(2px);
+}
+
+.moon-slide-arrow--prev:hover:not(:disabled) {
+  transform: translateX(-2px);
+}
+
+.moon-slide-arrow--next {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23d4b87a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 5l7 7-7 7'/%3E%3C/svg%3E");
+}
+
+.moon-slide-arrow--prev {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23d4b87a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 19l-7-7 7-7'/%3E%3C/svg%3E");
+}
+
+/* ——— Справочник: лунный / планетарный календарь ——— */
+.moon-calendar-panels {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.moon-cal-disclaimer {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(232, 226, 216, 0.55);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(201, 165, 74, 0.12);
+}
+
+.moon-cal-disclaimer--geo p {
+  margin: 0 0 10px;
+}
+
+.moon-geo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.moon-geo-btn {
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(201, 165, 74, 0.35);
+  background: rgba(201, 165, 74, 0.14);
+  color: #f5ead6;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.moon-geo-btn:hover:not(:disabled) {
+  background: rgba(201, 165, 74, 0.24);
+  border-color: rgba(212, 184, 122, 0.5);
+}
+
+.moon-geo-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.moon-geo-btn--ghost {
+  border-color: rgba(255, 252, 245, 0.12);
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(232, 226, 216, 0.78);
+}
+
+.moon-geo-btn--ghost:hover:not(:disabled) {
+  border-color: rgba(255, 252, 245, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.moon-geo-msg {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(251, 191, 36, 0.85);
+}
+
+.moon-panel {
+  border-radius: 16px;
+  padding: 14px 14px 16px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(201, 165, 74, 0.14);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+}
+
+.moon-panel--accent {
+  border-color: rgba(167, 139, 250, 0.28);
+  background: linear-gradient(168deg, rgba(120, 90, 160, 0.18) 0%, rgba(20, 14, 28, 0.55) 100%);
+}
+
+.moon-panel-title {
+  margin: 0 0 10px;
+  font-family: var(--font-display, serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(253, 248, 240, 0.92);
+}
+
+.moon-panel-lead {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(248, 244, 236, 0.88);
+}
+
+.moon-panel-muted {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(232, 226, 216, 0.55);
+}
+
+.moon-panel-strong {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fde68a;
+}
+
+.moon-scenario-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 400px) {
+  .moon-scenario-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.moon-scenario-card {
+  padding: 10px 11px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.moon-scenario-card p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(248, 244, 236, 0.82);
+}
+
+.moon-scenario-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(201, 165, 74, 0.88);
+}
+
+@media (max-width: 720px) {
+  .moon-panel--scenario-guide .moon-panel-title {
+    font-size: clamp(1.12rem, 4.2vw, 1.32rem);
+    margin-bottom: 12px;
+  }
+
+  .moon-panel--scenario-guide .moon-scenario-card {
+    padding: 12px 14px;
+  }
+
+  .moon-panel--scenario-guide .moon-scenario-label {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  .moon-panel--scenario-guide .moon-scenario-card p {
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 1.52;
+  }
+}
+
+.moon-bullet-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(248, 244, 236, 0.86);
+}
+
+.moon-bullet-list li {
+  margin-bottom: 6px;
+}
+
+.moon-dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.moon-dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: start;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Узкий экран: подпись и значение столбцом — иначе длинные dt/dd наезжают друг на друга */
+@media (max-width: 600px) {
+  .moon-dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px 0;
+  }
+}
+
+.moon-dl > div:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.moon-dl dt {
+  margin: 0;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(232, 226, 216, 0.52);
+  word-break: break-word;
+}
+
+.moon-dl dd {
+  margin: 0;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(248, 244, 236, 0.9);
+  word-break: break-word;
+}
+
+.moon-planet-table {
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.moon-planet-head,
+.moon-planet-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 0.55fr;
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.moon-planet-head {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(232, 226, 216, 0.55);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.moon-planet-row:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.moon-planet-row:nth-child(even) {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 380px) {
+  .gauge-num {
+    font-size: 22px;
+  }
+
+  .gauge-zodiac {
+    font-size: 15px;
+  }
+
+  .dash-col {
+    padding: 10px 6px 12px;
+  }
+}

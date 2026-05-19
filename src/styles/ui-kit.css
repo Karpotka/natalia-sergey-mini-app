@@ -1,0 +1,204 @@
+/**
+ * UI kit (референс): pill-кнопки со ✦, плавающий tab bar, скруглённые модалки.
+ */
+
+/* ——— Кнопки (primary) ——— */
+.btn-primary,
+.consult-cta-primary,
+.tarot-primary-btn,
+.horoscope-confirm-primary,
+.home-read-forecast-btn {
+  position: relative;
+  border-radius: 999px;
+  min-height: 54px;
+  padding: 16px 40px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.shell-cabinet-btn)::before,
+.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.shell-cabinet-btn)::after,
+.consult-cta-primary::before,
+.consult-cta-primary::after,
+.tarot-primary-btn::before,
+.tarot-primary-btn::after,
+.horoscope-confirm-primary::before,
+.horoscope-confirm-primary::after,
+.home-read-forecast-btn::before,
+.home-read-forecast-btn::after {
+  content: '✦';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.72;
+  color: #0a0e1a;
+  pointer-events: none;
+}
+
+.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.shell-cabinet-btn)::before,
+.consult-cta-primary::before,
+.tarot-primary-btn::before,
+.horoscope-confirm-primary::before,
+.home-read-forecast-btn::before {
+  left: 18px;
+}
+
+.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.shell-cabinet-btn)::after,
+.consult-cta-primary::after,
+.tarot-primary-btn::after,
+.horoscope-confirm-primary::after,
+.home-read-forecast-btn::after {
+  right: 18px;
+}
+
+.profile-tarot-shop-btn.btn-primary,
+.profile-plan-btn.btn-primary,
+.profile-topup-pack-btn.btn-primary {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 999px;
+}
+
+/* ——— Кнопки (secondary) ——— */
+.btn-ghost,
+.tarot-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--celestial-gold-bright, #e8c547);
+  background: rgba(5, 12, 28, 0.82);
+  border: 1px solid var(--celestial-gold-border, rgba(212, 175, 55, 0.42));
+}
+
+.btn-ghost:hover,
+.tarot-secondary-btn:hover {
+  color: var(--celestial-text, #f5f7fa);
+  background: rgba(8, 18, 42, 0.92);
+  border-color: var(--celestial-gold-border-strong, rgba(212, 175, 55, 0.62));
+}
+
+.dream-pay-cancel.btn-ghost {
+  width: 100%;
+}
+
+/* ——— Плавающая нижняя навигация ——— */
+.pager-root {
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+}
+
+.pager-rail {
+  width: 100%;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 0;
+  padding: 8px 6px 10px;
+  border: 1px solid var(--celestial-gold-border, rgba(212, 175, 55, 0.42));
+  border-radius: 24px;
+  border-top: 1px solid var(--celestial-gold-border, rgba(212, 175, 55, 0.42));
+  background: linear-gradient(
+    180deg,
+    rgba(10, 22, 48, 0.96) 0%,
+    rgba(5, 12, 28, 0.98) 100%
+  );
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(212, 175, 55, 0.08);
+}
+
+.pager-rail-btn {
+  border-radius: 16px;
+}
+
+.pager-rail-btn.is-active {
+  background: rgba(212, 175, 55, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.12);
+}
+
+@media (max-width: 480px) {
+  .pager-root {
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+    padding-right: max(10px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .pager-rail {
+    border-radius: 22px;
+    padding: 6px 4px 8px;
+  }
+}
+
+/* ——— Карточки и заголовки ——— */
+.product-hero h1,
+.consult-form-title,
+.horoscope-confirm-modal h2,
+.horoscope-confirm-modal h3,
+.dream-pay-modal h2,
+.dream-pay-modal h3 {
+  font-family: var(--font-display);
+  color: var(--celestial-gold-bright, #e8c547);
+  letter-spacing: 0.04em;
+}
+
+.product-hero,
+.consult-expert-solo,
+.home-quick-card {
+  border-radius: var(--celestial-radius-lg, 22px);
+}
+
+/* ——— Модальные окна ——— */
+.consult-form-dialog,
+.horoscope-confirm-modal,
+.dream-pay-modal,
+.tarot-spread-modal-dialog,
+.onboarding-card {
+  border-radius: 24px 24px 0 0;
+  border: 1px solid var(--celestial-gold-border, rgba(212, 175, 55, 0.42));
+  box-shadow:
+    0 -24px 64px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(212, 175, 55, 0.06);
+}
+
+@media (min-width: 520px) {
+  .consult-form-dialog,
+  .horoscope-confirm-modal,
+  .dream-pay-modal,
+  .tarot-spread-modal-dialog,
+  .onboarding-card {
+    border-radius: 24px;
+    border-bottom: 1px solid var(--celestial-gold-border, rgba(212, 175, 55, 0.42));
+  }
+}
+
+.consult-form-close {
+  border-radius: 999px;
+}
+
+/* ——— Поля ввода ——— */
+.profile-input,
+.profile-input-host,
+.tarot-question-input,
+.tarot-followup-input {
+  border-radius: 16px;
+  min-height: 48px;
+}
+
+/* ——— Отступ под плавающий tab bar ——— */
+.product-panel-inner:not(.product-panel-inner--moon) {
+  padding-bottom: 88px;
+}
+
+.horoscope-cal-panel {
+  border-radius: var(--celestial-radius-lg, 22px);
+}

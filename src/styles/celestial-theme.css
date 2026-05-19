@@ -1,0 +1,386 @@
+/**
+ * Celestial Dark — золотые рамки, глубокий navy, единый стиль как в референсе.
+ * Расстановка UI не меняется; только цвета, фоны, рамки, кнопки.
+ */
+
+/* ——— Панели: прозрачные, фон на .shell--celestial-bg ——— */
+.product-panel--tarot,
+.product-panel--horoscope,
+.product-panel--learn,
+.product-panel--profile,
+.product-panel--consult,
+.product-panel--moon {
+  --shell-text: var(--celestial-text);
+  --shell-muted: var(--celestial-muted);
+  color: var(--shell-text);
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+.shell[data-shell-panel] .shell-header,
+.shell[data-shell-panel] .pager-rail {
+  border-color: var(--celestial-gold-border);
+}
+
+.shell[data-shell-panel='tarot'] .shell-header,
+.shell[data-shell-panel='horoscope'] .shell-header,
+.shell[data-shell-panel='consult'] .shell-header,
+.shell[data-shell-panel='profile'] .shell-header,
+.shell[data-shell-panel='learn'] .shell-header,
+.shell[data-shell-panel='tarot'] .pager-rail,
+.shell[data-shell-panel='horoscope'] .pager-rail,
+.shell[data-shell-panel='consult'] .pager-rail,
+.shell[data-shell-panel='profile'] .pager-rail,
+.shell[data-shell-panel='learn'] .pager-rail {
+  border-color: var(--celestial-gold-border);
+}
+
+/* ——— Карточки разделов ——— */
+.product-hero {
+  border-radius: var(--celestial-radius-lg);
+  background: linear-gradient(
+    165deg,
+    rgba(12, 24, 52, 0.92) 0%,
+    rgba(6, 14, 36, 0.88) 48%,
+    rgba(4, 10, 28, 0.95) 100%
+  );
+  border: 1px solid var(--celestial-gold-border);
+  box-shadow:
+    var(--celestial-shadow-card),
+    inset 0 1px 0 rgba(212, 175, 55, 0.08);
+}
+
+.product-hero::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(212, 175, 55, 0.85),
+    rgba(232, 197, 71, 0.75),
+    transparent
+  );
+}
+
+.product-hero--tarot,
+.product-hero--horoscope,
+.product-hero--consult,
+.product-hero--learn,
+.product-hero--profile {
+  --hero-accent: var(--celestial-gold);
+  --hero-accent-2: var(--celestial-gold-bright);
+}
+
+.product-hero h1 {
+  color: var(--celestial-text);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+}
+
+.product-hero a {
+  color: var(--celestial-gold-bright);
+}
+
+.product-lead {
+  background: rgba(5, 12, 28, 0.55);
+  border: 1px solid var(--celestial-gold-border-soft);
+  border-radius: var(--celestial-radius-sm);
+  color: var(--celestial-text-soft) !important;
+}
+
+/* ——— Главная (луна) ——— */
+.moon-root {
+  color: var(--celestial-text);
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.home-today-card {
+  border-radius: var(--celestial-radius-lg);
+  padding: 0;
+  border: 1px solid var(--celestial-gold-border);
+  background: linear-gradient(165deg, rgba(10, 22, 48, 0.96) 0%, rgba(5, 12, 28, 0.98) 100%);
+  box-shadow: var(--celestial-shadow-card);
+}
+
+.home-today-inner {
+  border-radius: inherit;
+  border: none;
+  background: transparent;
+}
+
+.home-today-moon-icon {
+  border: 1px solid var(--celestial-gold-border-soft);
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.home-today-tags {
+  color: var(--celestial-gold);
+}
+
+.home-read-forecast-btn {
+  color: #0a0e1a;
+  background: var(--celestial-btn-gradient);
+  box-shadow: var(--celestial-btn-shadow);
+}
+
+.home-section-title {
+  color: var(--celestial-text);
+  letter-spacing: 0.02em;
+}
+
+/* ——— Кнопки ——— */
+.btn-primary,
+.consult-cta-primary,
+.tarot-primary-btn {
+  color: #0a0e1a !important;
+  background: var(--celestial-btn-gradient) !important;
+  border: 1px solid rgba(212, 175, 55, 0.45) !important;
+  box-shadow: var(--celestial-btn-shadow) !important;
+}
+
+.btn-primary:hover:not(:disabled),
+.consult-cta-primary:hover,
+.tarot-primary-btn:hover:not(:disabled) {
+  filter: brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 252, 245, 0.35),
+    0 10px 32px rgba(212, 175, 55, 0.28) !important;
+}
+
+.btn-ghost,
+.tarot-secondary-btn {
+  border-radius: var(--celestial-radius-sm);
+  border: 1px solid var(--celestial-gold-border);
+  background: rgba(5, 12, 28, 0.5);
+  color: var(--celestial-text);
+}
+
+.btn-ghost:hover,
+.tarot-secondary-btn:hover {
+  border-color: var(--celestial-gold-border-strong);
+  background: rgba(8, 18, 42, 0.7);
+}
+
+/* ——— Профиль / формы ——— */
+.profile-label {
+  color: rgba(212, 175, 55, 0.65);
+}
+
+.profile-input,
+.profile-input-host {
+  border-radius: var(--celestial-radius-sm);
+  border-color: var(--celestial-gold-border-soft);
+  background: rgba(4, 10, 28, 0.65);
+}
+
+.profile-input:focus,
+.profile-input-host:focus-within {
+  border-color: var(--celestial-gold-border-strong);
+}
+
+.profile-place-suggestions {
+  border: 1px solid var(--celestial-gold-border);
+  background: rgba(5, 12, 28, 0.98);
+}
+
+/* ——— Консультации ——— */
+.consult-kicker {
+  color: rgba(212, 175, 55, 0.75);
+}
+
+.consult-price-note {
+  border: 1px solid var(--celestial-gold-border);
+  background: linear-gradient(135deg, rgba(10, 22, 48, 0.85) 0%, rgba(5, 12, 28, 0.9) 100%);
+}
+
+.consult-expert-solo {
+  border: 1px solid var(--celestial-gold-border);
+  background: linear-gradient(165deg, rgba(12, 24, 52, 0.95) 0%, rgba(4, 10, 28, 0.98) 100%);
+  box-shadow: var(--celestial-shadow-card);
+}
+
+.consult-expert-solo::before {
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.9), rgba(232, 197, 71, 0.85), rgba(212, 175, 55, 0.7));
+}
+
+.consult-expert-solo-badge {
+  border-color: var(--celestial-gold-border-strong);
+  color: var(--celestial-text);
+}
+
+.consult-expert-solo-role {
+  color: rgba(212, 175, 55, 0.8);
+}
+
+.consult-footnote {
+  border: 1px solid var(--celestial-gold-border-soft);
+  background: rgba(5, 12, 28, 0.45);
+}
+
+.consult-form-dialog {
+  border: 1px solid var(--celestial-gold-border);
+  background: linear-gradient(168deg, #0c1834 0%, #061020 52%, #040a18 100%);
+}
+
+/* ——— Гороскоп ——— */
+.horoscope-cell {
+  border: 1px solid var(--celestial-gold-border-soft);
+}
+
+.horoscope-cell.is-selected {
+  border-color: var(--celestial-gold-border-strong);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.2);
+}
+
+.horoscope-cell.is-today {
+  border-color: rgba(212, 175, 55, 0.55);
+}
+
+.horoscope-confirm-modal {
+  border: 1px solid var(--celestial-gold-border);
+  background: linear-gradient(168deg, #0c1834 0%, #061020 100%);
+}
+
+.horoscope-confirm-primary,
+.horoscope-confirm-modal .btn-primary {
+  background: var(--celestial-btn-gradient);
+  color: #0a0e1a;
+}
+
+.horoscope-confirm-cancel,
+.horoscope-confirm-modal .btn-ghost {
+  color: var(--celestial-gold-bright);
+  background: rgba(5, 12, 28, 0.82);
+  border: 1px solid var(--celestial-gold-border);
+}
+
+/* ——— Таро ——— */
+.tarot-runest-root {
+  --t-gold: var(--celestial-gold);
+  --t-gold-deep: var(--celestial-gold-dim);
+  --t-cream: var(--celestial-text);
+}
+
+.tarot-spread-btn,
+.tarot-question-input,
+.tarot-followup-input {
+  border-color: var(--celestial-gold-border-soft);
+}
+
+.tarot-spread-btn.selected {
+  border-color: var(--celestial-gold-border-strong);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.15);
+}
+
+.dream-pay-modal {
+  border: 1px solid var(--celestial-gold-border);
+  background: linear-gradient(168deg, #0c1834 0%, #061020 52%, #040a18 100%);
+}
+
+.dream-pay-button {
+  border-color: var(--celestial-gold-border);
+}
+
+.dream-pay-astro-icon {
+  color: var(--celestial-gold-bright);
+  border-color: var(--celestial-gold-border);
+}
+
+/* ——— Онбординг ——— */
+.onboarding-card {
+  border: 1px solid var(--celestial-gold-border);
+  background: linear-gradient(165deg, rgba(10, 22, 48, 0.95) 0%, rgba(4, 10, 28, 0.98) 100%);
+}
+
+/* ——— Бейдж астрокоинов ——— */
+.astrocoins-badge {
+  border-color: var(--celestial-gold-border);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(40, 48, 88, 0.25) 100%);
+}
+
+.astrocoins-badge-icon {
+  color: var(--celestial-gold-bright);
+}
+
+/* ——— Нижняя навигация ——— */
+.shell[data-shell-panel] .pager-rail {
+  border-top-color: var(--celestial-gold-border);
+}
+
+.pager-rail-btn.is-active {
+  color: var(--celestial-gold-bright);
+  background: rgba(212, 175, 55, 0.14);
+  border: none;
+  box-shadow: none;
+}
+
+.pager-rail-btn:hover {
+  color: rgba(245, 247, 250, 0.78);
+}
+
+/* ——— Профиль: карточки и магазин ——— */
+.profile-tarot-shop-card,
+.profile-subscription-card,
+.horoscope-gate {
+  border: 1px solid var(--celestial-gold-border) !important;
+  border-radius: var(--celestial-radius-md);
+  background: linear-gradient(165deg, rgba(10, 22, 48, 0.9) 0%, rgba(5, 12, 28, 0.92) 100%) !important;
+}
+
+.profile-section-title,
+.horoscope-day-block-title {
+  color: var(--celestial-gold-bright);
+}
+
+.horoscope-cal-panel {
+  border: 1px solid var(--celestial-gold-border);
+  border-radius: var(--celestial-radius-lg);
+  background: rgba(5, 12, 28, 0.55);
+}
+
+.horoscope-day-block {
+  border: 1px solid var(--celestial-gold-border-soft);
+  border-radius: var(--celestial-radius-md);
+  background: rgba(5, 12, 28, 0.45);
+}
+
+/* ——— Таро: сетка и карточки ——— */
+.tarot-spread-btn {
+  border-radius: var(--celestial-radius-md);
+  background: rgba(5, 12, 28, 0.65);
+}
+
+.product-hero--tarot.tarot-setup-hero,
+.tarot-saved-panel {
+  border-color: var(--celestial-gold-border);
+}
+
+.tarot-deck-fan-card {
+  border: 1px solid var(--celestial-gold-border-soft);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.tarot-card-face--back {
+  border: 1px solid var(--celestial-gold-border-soft);
+}
+
+.shell-disclaimer {
+  border-top-color: var(--celestial-gold-border-soft);
+  background: rgba(5, 12, 28, 0.9);
+}
+
+.api-banner {
+  border: 1px solid var(--celestial-gold-border);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(40, 48, 88, 0.2) 100%);
+}
+
+.consult-form-backdrop {
+  background: rgba(3, 8, 20, 0.82);
+}
+
+.dream-pay-modal-backdrop {
+  background: rgba(3, 8, 20, 0.82);
+}
+
+.tarot-spread-modal-dialog {
+  border: 1px solid var(--celestial-gold-border);
+  background: linear-gradient(168deg, #0c1834 0%, #061020 100%);
+}

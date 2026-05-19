@@ -1,0 +1,657 @@
+/* Оболочка VK / Telegram: спокойная типографика, без «театральных» шрифтов */
+
+.shell {
+  position: relative;
+  isolation: isolate;
+  color: var(--shell-text);
+}
+
+.shell--products {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100dvh;
+  min-height: 100svh;
+  height: 100dvh;
+  height: 100svh;
+  max-height: 100dvh;
+  max-height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background-color: var(--celestial-bg-deep, #050c1c);
+}
+
+.shell--products.shell--celestial-bg {
+  background-color: transparent;
+  background-image: var(--app-bg-image);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center top;
+  background-attachment: scroll;
+}
+
+/* Мобильные: облака по краям, центр под контент */
+@media (max-width: 520px) {
+  .shell--products.shell--celestial-bg {
+    background-position: center top;
+    background-size: cover;
+  }
+}
+
+@media (max-width: 380px) {
+  .shell--products.shell--celestial-bg {
+    background-position: center -1%;
+  }
+}
+
+@media (max-height: 700px) and (max-width: 520px) {
+  .shell--products.shell--celestial-bg {
+    background-position: center 4%;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .shell--products.shell--celestial-bg {
+    background-position: center 28%;
+    background-size: cover;
+  }
+}
+
+.shell--products::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+.shell--products::after {
+  display: none;
+}
+
+.shell-header,
+.shell > .api-banner {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.shell-header {
+  text-align: center;
+  padding: calc(12px + env(safe-area-inset-top)) 18px 12px;
+  border-bottom: 1px solid var(--celestial-gold-border);
+  background: linear-gradient(180deg, rgba(8, 18, 42, 0.97) 0%, rgba(5, 12, 28, 0.94) 100%);
+  backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.shell-main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: transparent;
+  background-image: none;
+}
+
+.product-pager {
+  background-color: transparent;
+  background-image: none;
+}
+
+.product-panel {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+.shell-disclaimer {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 14px calc(8px + env(safe-area-inset-bottom));
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: rgba(232, 226, 216, 0.38);
+  background: rgba(6, 5, 8, 0.75);
+  border-top: 1px solid var(--premium-line-soft);
+}
+
+.shell-brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 4.2vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--celestial-gold-bright);
+  text-shadow: 0 0 24px rgba(212, 175, 55, 0.2);
+}
+
+.shell-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  gap: 0;
+}
+
+.shell-header-bar .shell-brand {
+  text-align: center;
+  max-width: min(100%, 320px);
+  margin: 0;
+}
+
+.astrocoins-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 250, 235, 0.95);
+  background: linear-gradient(135deg, rgba(201, 165, 74, 0.22) 0%, rgba(88, 72, 120, 0.2) 100%);
+  border: 1px solid rgba(201, 165, 74, 0.35);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+}
+
+.astrocoins-badge-icon {
+  font-size: 13px;
+  line-height: 1;
+  color: #fde68a;
+}
+
+.astrocoins-badge-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.shell-cabinet-btn {
+  grid-column: 1;
+  justify-self: start;
+  margin: 0;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(232, 226, 216, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(201, 165, 74, 0.22);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.shell-cabinet-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(201, 165, 74, 0.38);
+}
+
+.api-banner {
+  margin: 0 12px 8px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(201, 165, 74, 0.1) 0%, rgba(88, 72, 120, 0.12) 100%);
+  border: 1px solid rgba(201, 165, 74, 0.22);
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 252, 245, 0.94);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+}
+
+.api-banner a {
+  color: #fde68a;
+  font-weight: 600;
+}
+
+/* ——— Горизонтальные «продукты» ——— */
+
+.pager-root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+  overscroll-behavior: none;
+  background-color: transparent;
+  background-image: none;
+}
+
+.product-pager {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* Жесты горизонтального свайпа только здесь, не «утекают» в нижний rail. */
+  touch-action: pan-x pinch-zoom;
+  transform: translateZ(0);
+  overscroll-behavior: none;
+}
+
+.product-pager::-webkit-scrollbar {
+  display: none;
+}
+
+.product-panel {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  max-height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* none: меньше «резины» и проблесков белого фона WebView при достижении края скролла. */
+  overscroll-behavior-y: none;
+}
+
+.product-panel-inner {
+  min-height: 100%;
+  padding: 8px 0 calc(12px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.product-panel.product-panel--moon {
+  box-sizing: border-box;
+  /* Небольшой отступ снизу; safe-area даёт rail — без лишней прокручиваемой пустоты под контентом. */
+  padding-bottom: 8px;
+}
+
+/*
+ * Главная: явно обойти min-height: 100% у .product-panel-inner (та же специфичность одного класса
+ * могла проигрывать порядку в бандле) — иначе обёртка тянется на всю высоту скролла, а под
+ * «Быстрым доступом» остаётся пустое поле до таббара.
+ */
+.product-panel.product-panel--moon > .product-panel-inner.product-panel-inner--moon {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+}
+
+/* Герой-луна: ореол рисуется чуть за краем колонки — не обрезать по X на таче. */
+@media (pointer: coarse), (max-width: 520px) {
+  .product-panel.product-panel--moon {
+    overflow-x: visible;
+  }
+}
+
+.product-panel--tarot {
+  --shell-text: var(--celestial-text);
+  --shell-muted: var(--celestial-muted);
+  color: var(--shell-text);
+  display: flex;
+  flex-direction: column;
+}
+
+.product-panel--tarot .product-panel-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+}
+
+.product-panel--horoscope,
+.product-panel--learn,
+.product-panel--profile,
+.product-panel--consult {
+  --shell-text: var(--celestial-text);
+  --shell-muted: var(--celestial-muted);
+  color: var(--shell-text);
+}
+
+/* Нижняя навигация — на всю ширину, вплотную к низу экрана (safe-area внутри padding) */
+.pager-rail {
+  position: relative;
+  z-index: 4;
+  flex-shrink: 0;
+  margin-top: auto;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: space-evenly;
+  gap: 4px;
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+  padding: 10px 8px max(10px, env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+  box-sizing: border-box;
+  font-family: var(--font-ui);
+  background: linear-gradient(180deg, rgba(8, 18, 42, 0.98) 0%, rgba(5, 12, 28, 1) 100%);
+  border: none;
+  border-top: 1px solid var(--celestial-gold-border, rgba(212, 175, 55, 0.42));
+  border-radius: 0;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.pager-rail-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 4px 8px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(232, 226, 216, 0.42);
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  text-transform: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(201, 165, 74, 0.1);
+  transition:
+    color 0.16s ease,
+    background 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.pager-rail-btn:hover {
+  color: rgba(247, 243, 235, 0.62);
+}
+
+.pager-rail-btn.is-active {
+  color: var(--celestial-gold-bright, #e8c547);
+  background: rgba(212, 175, 55, 0.12);
+  box-shadow: none;
+}
+
+.pager-rail-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+
+.pager-rail-btn.is-active .pager-rail-icon {
+  opacity: 1;
+}
+
+.pager-rail-icon svg {
+  display: block;
+}
+
+.pager-rail-label {
+  display: block;
+  width: 100%;
+  padding: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  text-align: center;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+@media (max-width: 480px) {
+  .shell-header {
+    padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+  }
+
+  .shell-brand {
+    font-size: clamp(1.1rem, 4vw, 1.3rem);
+    letter-spacing: 0.12em;
+  }
+
+  .shell-header-bar .shell-brand {
+    max-width: 220px;
+  }
+
+  .shell-cabinet-btn {
+    padding: 6px 8px;
+    font-size: 9px;
+  }
+
+  .pager-rail {
+    padding: 8px 6px max(8px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .pager-rail-btn {
+    font-size: 9px;
+    min-height: 46px;
+    padding: 6px 2px 8px;
+    border-radius: 10px;
+  }
+
+  .pager-rail-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 360px) {
+  .pager-rail-label {
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+}
+
+/* ——— Карточки разделов (таро / гороскоп) ——— */
+
+.product-page {
+  padding: 16px 16px 24px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.product-hero {
+  position: relative;
+  border-radius: 20px;
+  padding: 24px 20px 22px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(255, 252, 245, 0.09);
+  box-shadow:
+    var(--premium-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.product-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--hero-accent, rgba(184, 163, 232, 0.9)),
+    var(--hero-accent-2, rgba(125, 211, 200, 0.85)),
+    transparent
+  );
+  opacity: 0.95;
+}
+
+.product-hero--tarot {
+  --hero-accent: #d8b4fe;
+  --hero-accent-2: #a78bfa;
+}
+
+.product-hero--horoscope {
+  --hero-accent: #fcd34d;
+  --hero-accent-2: #fb923c;
+}
+
+.product-hero--consult {
+  --hero-accent: #d4af37;
+  --hero-accent-2: #e8c547;
+}
+
+.product-hero--learn {
+  --hero-accent: #9cbd9c;
+  --hero-accent-2: #c9a54a;
+}
+
+.product-hero--profile {
+  --hero-accent: #b8a8d8;
+  --hero-accent-2: #c9a54a;
+}
+
+.product-lead--soft {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.product-hero h1 {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 5vw, 1.85rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.22;
+  color: #fffefb;
+}
+
+.product-hero p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--shell-muted);
+}
+
+.product-hero a {
+  color: #fde68a;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.product-hero a:hover {
+  color: #fef08a;
+}
+
+.product-lead {
+  margin-top: 14px !important;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.product-actions {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn-primary,
+.consult-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 14px 22px;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 16px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  color: #0a0e1a;
+  background: var(--celestial-btn-gradient);
+  box-shadow: var(--celestial-btn-shadow);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    filter 0.12s ease;
+}
+
+.btn-primary:hover:not(:disabled),
+.consult-cta-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 10px 32px rgba(212, 175, 55, 0.3);
+}
+
+.btn-primary:active:not(:disabled),
+.consult-cta-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled,
+.consult-cta-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-ghost {
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  color: var(--shell-text);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 252, 245, 0.1);
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(201, 165, 74, 0.18);
+}
