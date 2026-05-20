@@ -17,8 +17,12 @@ import { clearPaymentFlowState, readPaymentFlowState } from '../lib/paymentFlowS
 import { formatPaymentOrOrderErrorForUser } from '../lib/paymentUserErrors';
 import { fetchPlaceSuggestions, type PlaceSuggestion } from '../lib/placeSearch';
 import { AstrocoinTopupSection } from '../features/profile/AstrocoinTopupSection';
-import { TarotBackEquipStrip } from '../features/tarot/TarotBackEquipStrip';
 import { TarotBackShopSection } from '../features/tarot/TarotBackShopSection';
+import {
+  BALANCE_LOADING,
+  NEED_LOGIN_BALANCE,
+  NEED_LOGIN_SUBSCRIPTION,
+} from '../lib/userFacingCopy';
 import { readProductPanel } from '../layout/ProductPager';
 
 const GENDER_OPTIONS: { value: UserGender; label: string }[] = [
@@ -121,7 +125,7 @@ export function ProfilePage() {
   const { profile, setProfile } = useProfile();
   const [searchParams] = useSearchParams();
   const panel = readProductPanel(searchParams);
-  const { token, astrocoins, authMode, platform, applyAstrocoinsFromResponse, refreshAstrocoinsFromProfile } =
+  const { token, astrocoins, authMode, applyAstrocoinsFromResponse, refreshAstrocoinsFromProfile } =
     useSession();
   const backendOn = isBackendEnabled();
   const [local, setLocal] = useState<UserProfile>(() => ({ ...profile }));
@@ -331,7 +335,7 @@ export function ProfilePage() {
   const paySelectedSubscription = async () => {
     setSubNotice(null);
     if (!token) {
-      setSubNotice('Для оплаты подписки войдите через VK.');
+      setSubNotice(NEED_LOGIN_SUBSCRIPTION);
       return;
     }
     if (!selectedPlanId) {
@@ -460,23 +464,18 @@ export function ProfilePage() {
           </p>
         ) : token ? (
           <p className="profile-astrocoins-lead" style={{ marginBottom: 0 }}>
-            {platform === 'telegram'
-              ? 'Баланс подтянется после входа через Telegram.'
-              : 'Зайдите в приложение через VK — мы автоматически покажем ваш баланс астрокоинов.'}
+            {BALANCE_LOADING}
           </p>
         ) : (
           <p className="profile-astrocoins-lead" style={{ marginBottom: 0 }}>
-            {platform === 'telegram'
-              ? 'Войдите через Telegram, чтобы увидеть счёт астрокоинов.'
-              : 'Войдите через VK, чтобы увидеть свой счёт астрокоинов.'}
+            {NEED_LOGIN_BALANCE}
           </p>
         )}
       </section>
 
       {backendOn ? <AstrocoinTopupSection /> : null}
 
-      {backendOn && platform === 'telegram' ? <TarotBackEquipStrip /> : null}
-      {backendOn && platform !== 'telegram' ? <TarotBackShopSection /> : null}
+      {backendOn ? <TarotBackShopSection /> : null}
 
       <section className="profile-subscription" aria-labelledby="profile-subscription-heading">
         <h2 id="profile-subscription-heading" className="profile-subscription-title">

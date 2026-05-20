@@ -149,7 +149,7 @@ function profileToDraft(p: UserProfile): ConsultDraft {
 }
 
 export function ConsultationsPage() {
-  const { token, authMode } = useSession();
+  const { token } = useSession();
   const { profile } = useProfile();
   const [, setSearchParams] = useSearchParams();
   const apiOn = isBackendEnabled();
@@ -250,7 +250,7 @@ export function ConsultationsPage() {
   const proceedToPayment = async (e?: FormEvent) => {
     e?.preventDefault();
     if (!token) {
-      setFormError('Для оплаты войдите через VK.');
+      setFormError('Войдите в приложение, чтобы оплатить консультацию.');
       return;
     }
     if (catalogLoading) {
@@ -539,16 +539,10 @@ export function ConsultationsPage() {
 
           {apiOn && (
             <p className="consult-footnote">
-              {!token &&
-              authMode !== 'dev_token' &&
-              authMode !== 'vk_token' &&
-              authMode !== 'tg_token' &&
-              authMode !== 'idle' ? (
-                <>Войдите через VK для заявки и оплаты.</>
-              ) : token ? (
-                <>После формы — оплата картой. Чек на email.</>
+              {!token ? (
+                <>Войдите в приложение, чтобы оставить заявку и оплатить.</>
               ) : (
-                <>Войдите через VK для заявки.</>
+                <>После формы — оплата картой. Чек на email.</>
               )}
             </p>
           )}

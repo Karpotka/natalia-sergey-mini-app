@@ -1,4 +1,4 @@
-import { API_DEFAULT_HOST, getApiBase, isApiCrossOrigin } from './resolveApiBase';
+import { getApiBase, isApiCrossOrigin } from './resolveApiBase';
 
 export class ApiError extends Error {
   code: string;
@@ -24,10 +24,8 @@ export function isNetworkApiError(e: unknown): boolean {
 
 function corsHintMessage(): string {
   return (
-    'Браузер заблокировал запрос к API (CORS): сервер не отвечает на preflight OPTIONS. ' +
-    'Для Telegram: разместите мини-приложение на том же домене, что API (например ' +
-    `${API_DEFAULT_HOST}, сборка VITE_API_BASE=same-origin), или попросите бэкенд включить CORS. ` +
-    'См. TELEGRAM-DEPLOY.txt в репозитории.'
+    'Не удалось связаться с сервером (блокировка запроса браузером). ' +
+    'Попробуйте позже или откройте приложение заново из меню бота или соцсети.'
   );
 }
 

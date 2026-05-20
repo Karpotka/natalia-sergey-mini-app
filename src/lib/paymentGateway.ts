@@ -52,7 +52,7 @@ export function parseVkOpenPayFormFromOrderResponse(raw: unknown): Record<string
 type BridgeSend = (method: string, props?: Record<string, unknown>) => Promise<unknown>;
 
 export async function openVkOrderPayment(raw: unknown): Promise<{ ok: true } | { error: string }> {
-  if (!isRecord(raw)) return { error: 'Сервер не вернул данные оплаты VK.' };
+  if (!isRecord(raw)) return { error: 'Сервер не вернул данные для оплаты.' };
   const send = vkBridge.send as BridgeSend;
   const openPay = parseVkOpenPayFormFromOrderResponse(raw);
   try {
@@ -62,12 +62,12 @@ export async function openVkOrderPayment(raw: unknown): Promise<{ ok: true } | {
     }
     const item = raw.vk_item;
     if (item === undefined || item === null) {
-      return { error: 'Сервер не вернул vk_item или vk_open_pay_form для оплаты VK.' };
+      return { error: 'Сервер не вернул данные для оплаты в приложении.' };
     }
     await send('VKWebAppShowOrderBox', { type: 'item', item });
     return { ok: true };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Не удалось открыть оплату VK.' };
+    return { error: e instanceof Error ? e.message : 'Не удалось открыть оплату.' };
   }
 }
 
@@ -80,17 +80,17 @@ export async function openTelegramStarsInvoice(
   url: string,
 ): Promise<{ ok: true } | { error: string }> {
   if (!isTelegramMiniAppEnvironment()) {
-    return { error: 'Оплата звёздами доступна только в Telegram.' };
+    return { error: 'Оплата звёздами недоступна в этом окне.' };
   }
   if (!url || !/t\.me\//i.test(url)) {
-    return { error: 'Сервер не вернул ссылку invoice Telegram.' };
+    return { error: 'Сервер не вернул ссылку на оплату.' };
   }
   return openTelegramInvoice(url);
 }
 
 function openTelegramInvoice(url: string): Promise<{ ok: true } | { error: string }> {
   const tg = window.Telegram?.WebApp;
-  if (!tg?.openInvoice) return Promise.resolve({ error: 'Telegram WebApp недоступен.' });
+  if (!tg?.openInvoice) return Promise.resolve({ error: 'Окно оплаты недоступно. Откройте приложение заново.' });
 
   return new Promise((resolve) => {
     try {
@@ -101,7 +101,7 @@ function openTelegramInvoice(url: string): Promise<{ ok: true } | { error: strin
         else resolve({ error: 'Оплата не завершена.' });
       });
     } catch (e) {
-      resolve({ error: e instanceof Error ? e.message : 'Не удалось открыть оплату Telegram.' });
+      resolve({ error: e instanceof Error ? e.message : 'Не удалось открыть оплату.' });
     }
   });
 }

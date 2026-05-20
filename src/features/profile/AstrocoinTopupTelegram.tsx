@@ -251,7 +251,7 @@ export function AstrocoinTopupTelegram({ token, astrocoins, applyAstrocoinsFromR
           </span>
           <span className="profile-topup-method-text">
             <span className="profile-topup-method-name">Звёзды</span>
-            <span className="profile-topup-method-hint">Быстро в Telegram</span>
+            <span className="profile-topup-method-hint">Оплата звёздами</span>
           </span>
         </button>
         <button

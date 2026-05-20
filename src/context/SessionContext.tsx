@@ -6,6 +6,11 @@ import { pickWalletAstrocoinBalance } from '../lib/astrocoinsBalance';
 import { detectAppPlatform, type AppPlatform } from '../platform/detectPlatform';
 import { extractInitJwt, initResponseDenied, readEquipBackgroundId } from '../session/authHelpers';
 import {
+  AUTH_NO_JWT,
+  AUTH_OPEN_FROM_APP,
+  authFailedMessage,
+} from '../lib/userFacingCopy';
+import {
   ensureTelegramWebAppReady,
   hasTelegramAuthInitData,
   readTelegramInitData,
@@ -144,7 +149,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (!hasTelegramAuthInitData() || !initData) {
         setEquippedTarotBackgroundId(null);
         setAuthMode('auth_failed');
-        setAuthMessage('Откройте приложение из Telegram (нужен initData мини-приложения).');
+        setAuthMessage(AUTH_OPEN_FROM_APP);
         return;
       }
 
@@ -157,13 +162,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         }
         setEquippedTarotBackgroundId(null);
         setAuthMode('auth_failed');
-        setAuthMessage('Telegram: в ответе нет JWT (POST /initUserDailyRuneHandler).');
+        setAuthMessage(AUTH_NO_JWT);
       } catch (e) {
         setEquippedTarotBackgroundId(null);
         setAuthMode('auth_failed');
         const msg =
           e instanceof ApiError ? `${e.code}: ${e.message}` : e instanceof Error ? e.message : String(e);
-        setAuthMessage(`Вход через Telegram не удался: ${msg}`);
+        setAuthMessage(authFailedMessage(msg));
       }
       return;
     }
@@ -191,13 +196,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (applyInitSuccess(data, setters, 'vk_token')) return;
         setEquippedTarotBackgroundId(null);
         setAuthMode('auth_failed');
-        setAuthMessage('VK: в ответе нет JWT (POST /vk/init).');
+        setAuthMessage(AUTH_NO_JWT);
       } catch (e) {
         setEquippedTarotBackgroundId(null);
         setAuthMode('auth_failed');
         const msg =
           e instanceof ApiError ? `${e.code}: ${e.message}` : e instanceof Error ? e.message : String(e);
-        setAuthMessage(`Вход через VK не удался: ${msg}`);
+        setAuthMessage(authFailedMessage(msg));
       }
       return;
     }

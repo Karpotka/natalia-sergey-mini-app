@@ -1,4 +1,5 @@
 import { useSession } from '../context/SessionContext';
+import { BACKEND_UNAVAILABLE } from '../lib/userFacingCopy';
 
 export function ApiStatusBanner() {
   const { authMessage, authMode, backendEnabled } = useSession();
@@ -6,7 +7,7 @@ export function ApiStatusBanner() {
   if (!backendEnabled) {
     return (
       <div className="api-banner" role="status">
-        Сервер недоступен. Откройте приложение во ВКонтакте.{' '}
+        {BACKEND_UNAVAILABLE}{' '}
         <a href="https://serg.srvmysticode.ru/docs/#/" target="_blank" rel="noreferrer">
           Документация API
         </a>

@@ -1,7 +1,7 @@
 import { ApiError, isNetworkApiError } from '../api/client';
 
-const TELEGRAM_USERNAME_ORDER_MESSAGE =
-  'Нужен видимый @username в Telegram. Включите в настройках → перезапустите приложение → повторите заказ.';
+const USERNAME_REQUIRED_ORDER_MESSAGE =
+  'Нужен видимый никнейм (@username). Включите его в настройках профиля, перезапустите приложение и повторите заказ.';
 
 function shallowPayloadStrings(payload: unknown): string {
   if (!payload || typeof payload !== 'object') return '';
@@ -69,7 +69,7 @@ function isNotFoundConsultApiError(error: unknown): boolean {
  * (часто маршрут не задеплоен или блокирует CORS).
  */
 export function formatConsultApiErrorForUser(error: unknown): string {
-  if (isTelegramUsernameMissingForOrderError(error)) return TELEGRAM_USERNAME_ORDER_MESSAGE;
+  if (isTelegramUsernameMissingForOrderError(error)) return USERNAME_REQUIRED_ORDER_MESSAGE;
   if (isNetworkApiError(error) && error instanceof ApiError) return error.message;
   if (isNotFoundConsultApiError(error)) {
     return 'Сервис оплаты недоступен. Попробуйте позже или напишите в поддержку.';
@@ -79,7 +79,7 @@ export function formatConsultApiErrorForUser(error: unknown): string {
 
 /** Сообщение для блока оплаты / заказа: приоритет — подсказка про Telegram username. */
 export function formatPaymentOrOrderErrorForUser(error: unknown): string {
-  if (isTelegramUsernameMissingForOrderError(error)) return TELEGRAM_USERNAME_ORDER_MESSAGE;
+  if (isTelegramUsernameMissingForOrderError(error)) return USERNAME_REQUIRED_ORDER_MESSAGE;
   if (error instanceof ApiError) return error.message || `Ошибка: ${error.code}`;
   if (error instanceof Error) return error.message;
   return 'Не удалось выполнить операцию. Попробуйте позже.';
@@ -88,7 +88,7 @@ export function formatPaymentOrOrderErrorForUser(error: unknown): string {
 /** Текст из VK Bridge / `window.open` — тот же разбор, что и для `ApiError`. */
 export function formatPaymentUserFacingMessage(messageOrError: string | unknown): string {
   if (typeof messageOrError === 'string') {
-    if (isTelegramUsernameMissingForOrderError(new Error(messageOrError))) return TELEGRAM_USERNAME_ORDER_MESSAGE;
+    if (isTelegramUsernameMissingForOrderError(new Error(messageOrError))) return USERNAME_REQUIRED_ORDER_MESSAGE;
     return messageOrError;
   }
   return formatPaymentOrOrderErrorForUser(messageOrError);

@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useSession } from '../../context/SessionContext';
 
-/** Витрина покупки обложек — только VK и браузер (в Telegram см. TarotBackEquipStrip). */
 import { useTarotBackSkin } from '../../context/TarotBackSkinContext';
+import { NEED_LOGIN_TAROT_SHOP } from '../../lib/userFacingCopy';
 import { localTarotBackImageUrl } from './tarotBackCatalog';
 
 function shopBuyMessage(
@@ -93,7 +93,7 @@ export function TarotBackShopSection() {
       </p>
       {!token ? (
         <p className="profile-tarot-shop-lead" style={{ marginTop: 0 }}>
-          Войдите через VK, чтобы покупать обложки за астрокоины. Надеть бесплатную можно сразу.
+          {NEED_LOGIN_TAROT_SHOP}
         </p>
       ) : null}
       {astrocoins !== null && (

@@ -5,6 +5,7 @@ import { pickWalletAstrocoinBalance } from '../../lib/astrocoinsBalance';
 import { clearPaymentFlowState, markPaymentFlowStarted, readPaymentFlowState } from '../../lib/paymentFlowSession';
 import { invoiceUrlFromPaymentResponse, openPaymentInvoiceUrl } from '../../lib/paymentGateway';
 import { formatPaymentOrOrderErrorForUser, formatPaymentUserFacingMessage } from '../../lib/paymentUserErrors';
+import { NEED_LOGIN_TOPUP } from '../../lib/userFacingCopy';
 import { AstrocoinTopupTelegram } from './AstrocoinTopupTelegram';
 import {
   buildMoneyPackMap,
@@ -100,7 +101,7 @@ export function AstrocoinTopupSection() {
   const onPay = async (amount: number) => {
     setNotice(null);
     if (!token) {
-      setNotice('Войдите через VK, чтобы пополнить счёт.');
+      setNotice(NEED_LOGIN_TOPUP);
       return;
     }
     const meta = packMeta[amount];
@@ -153,9 +154,7 @@ export function AstrocoinTopupSection() {
           Пополнение
         </h2>
         <p className="profile-topup-lead">
-          {isTelegram
-            ? 'Выберите сумму и способ оплаты — всё в одном экране.'
-            : 'Оплата картой через ЮKassa. Астрокоины — для подписки, Таро и гороскопов.'}
+          Пополните счёт астрокоинами: выберите сумму и способ оплаты.
         </p>
         {!isTelegram ? (
           <p className="profile-topup-rate" aria-label="Курс: один рубль равен одному астрокоину">
