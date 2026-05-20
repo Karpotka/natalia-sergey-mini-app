@@ -1,0 +1,47 @@
+ASTRO VESPER — Telegram Mini App
+================================
+
+Ошибка «network / CORS / preflight OPTIONS 500»
+------------------------------------------------
+Фронт открыт на одном домене (ngrok, GitHub Pages, другой хост), API на
+https://serg.srvmysticode.ru — браузер перед POST шлёт OPTIONS. Сейчас сервер
+отвечает 500 без CORS-заголовков → вход в Telegram не проходит.
+
+Решение A (рекомендуется): тот же домен, что и API
+  1. Разместите собранный dist на serg.srvmysticode.ru, например:
+     https://serg.srvmysticode.ru/app/  (или поддомен с тем же origin).
+  2. Сборка:
+     VITE_API_BASE=same-origin npm run build
+  3. В BotFather укажите URL мини-приложения с этого же хоста.
+
+Решение B: CORS на бэкенде (Express/nginx)
+  Для OPTIONS и POST ответ должен включать, например:
+    Access-Control-Allow-Origin: <Origin мини-приложения>
+    Access-Control-Allow-Methods: GET, POST, PATCH, OPTIONS
+    Access-Control-Allow-Headers: Content-Type, Authorization
+  Разрешить Origin:
+    - URL из BotFather (ваш хостинг мини-приложения)
+    - https://web.telegram.org (часть клиентов Telegram)
+  Сейчас OPTIONS на /initUserDailyRuneHandler возвращает 500 — это чинит бэкенд.
+
+Локальная отладка
+-----------------
+  npm run dev
+  В .env.development уже: VITE_API_BASE=/api (прокси Vite → serg.srvmysticode.ru).
+  Туннель (ngrok) на порт 5173 → URL в BotFather.
+
+Продакшен-сборка для Telegram на том же сервере, что API
+--------------------------------------------------------
+  VITE_API_BASE=same-origin VITE_ENABLE_BACKEND=true npm run build
+
+Auth (OpenAPI)
+--------------
+  POST /initUserDailyRuneHandler  body: { initData, referralParam }
+  initData — сырой Telegram.WebApp.initData (не initDataUnsafe).
+  POST /auth/refresh — обновление JWT при auth_token_expired.
+
+Оплата звёздами (только в Telegram)
+-----------------------------------
+  GET /crystalStars — каталог пакетов (crystals, price_stars).
+  POST /createInvoiceStars  Bearer JWT  body: { id, discountPercent? }
+  → invoice_url → Telegram.WebApp.openInvoice (реализовано в профиле → Пополнение).

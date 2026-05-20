@@ -1,4 +1,4 @@
-import { API_BASE } from './config';
+import { API_DEFAULT_HOST, getApiBase, isApiCrossOrigin } from './resolveApiBase';
 
 export class ApiError extends Error {
   code: string;
@@ -16,7 +16,19 @@ export class ApiError extends Error {
 
 /** Сетевая ошибка до HTTP-ответа (обрыв, CORS, таймаут и т.п.). */
 export function isNetworkApiError(e: unknown): boolean {
-  return e instanceof ApiError && (e.code === 'network' || e.code === 'timeout' || e.status === 0);
+  return (
+    e instanceof ApiError &&
+    (e.code === 'network' || e.code === 'cors' || e.code === 'timeout' || e.status === 0)
+  );
+}
+
+function corsHintMessage(): string {
+  return (
+    'Браузер заблокировал запрос к API (CORS): сервер не отвечает на preflight OPTIONS. ' +
+    'Для Telegram: разместите мини-приложение на том же домене, что API (например ' +
+    `${API_DEFAULT_HOST}, сборка VITE_API_BASE=same-origin), или попросите бэкенд включить CORS. ` +
+    'См. TELEGRAM-DEPLOY.txt в репозитории.'
+  );
 }
 
 async function fetchOrThrow(url: string, init: RequestInit): Promise<Response> {
@@ -24,10 +36,14 @@ async function fetchOrThrow(url: string, init: RequestInit): Promise<Response> {
     return await fetch(url, init);
   } catch (e) {
     if (e instanceof TypeError) {
-      throw new ApiError(
-        'Не удалось связаться с сервером. Проверьте интернет или откройте раздел позже (ошибка сети или блокировка запроса).',
-        { code: 'network', status: 0, payload: e },
+      const msg = isApiCrossOrigin() ? corsHintMessage() : (
+        'Не удалось связаться с сервером. Проверьте интернет или откройте раздел позже (ошибка сети или блокировка запроса).'
       );
+      throw new ApiError(msg, {
+        code: isApiCrossOrigin() ? 'cors' : 'network',
+        status: 0,
+        payload: e,
+      });
     }
     if (e instanceof DOMException && e.name === 'AbortError') {
       throw new ApiError('Превышено время ожидания ответа сервера. Попробуйте ещё раз.', {
@@ -55,7 +71,7 @@ export async function apiPostJson<T>(
 ): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
-  const url = `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
+  const url = `${getApiBase()}${path.startsWith('/') ? path : `/${path}`}`;
   const res = await fetchOrThrow(url, { method: 'POST', headers, body: JSON.stringify(body) });
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   parseJsonPayload(data, res);
@@ -65,7 +81,7 @@ export async function apiPostJson<T>(
 export async function apiGetJson<T>(path: string, token?: string | null): Promise<T> {
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
-  const url = `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
+  const url = `${getApiBase()}${path.startsWith('/') ? path : `/${path}`}`;
   const res = await fetchOrThrow(url, { method: 'GET', headers });
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   parseJsonPayload(data, res);
@@ -79,7 +95,7 @@ export async function apiPatchJson<T>(
 ): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
-  const url = `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
+  const url = `${getApiBase()}${path.startsWith('/') ? path : `/${path}`}`;
   const res = await fetchOrThrow(url, { method: 'PATCH', headers, body: JSON.stringify(body) });
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   parseJsonPayload(data, res);

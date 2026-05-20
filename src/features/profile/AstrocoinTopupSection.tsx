@@ -7,6 +7,7 @@ import {
   type CrystalPackMoney,
 } from '../../api/mysticApi';
 import { useSession } from '../../context/SessionContext';
+import { AstrocoinTopupStars } from './AstrocoinTopupStars';
 import { pickWalletAstrocoinBalance } from '../../lib/astrocoinsBalance';
 import { clearPaymentFlowState, markPaymentFlowStarted, readPaymentFlowState } from '../../lib/paymentFlowSession';
 import { invoiceUrlFromPaymentResponse, openPaymentInvoiceUrl } from '../../lib/paymentGateway';
@@ -74,7 +75,8 @@ function formatTopupLoadError(error: unknown): string {
 }
 
 export function AstrocoinTopupSection() {
-  const { token, astrocoins, applyAstrocoinsFromResponse } = useSession();
+  const { token, astrocoins, platform, applyAstrocoinsFromResponse } = useSession();
+  const isTelegram = platform === 'telegram';
   const [packMeta, setPackMeta] = useState<Partial<Record<number, PackMeta>>>({});
   const [packsLoading, setPacksLoading] = useState(false);
   const [packsError, setPacksError] = useState<string | null>(null);
@@ -157,7 +159,7 @@ export function AstrocoinTopupSection() {
   const onPay = async (amount: number) => {
     setNotice(null);
     if (!token) {
-      setNotice('Войдите через VK, чтобы пополнить счёт.');
+      setNotice(isTelegram ? 'Войдите через Telegram, чтобы пополнить счёт.' : 'Войдите через VK, чтобы пополнить счёт.');
       return;
     }
     const meta = packMeta[amount];
@@ -210,16 +212,32 @@ export function AstrocoinTopupSection() {
           Пополнение
         </h2>
         <p className="profile-topup-lead">
-          Оплата картой через ЮKassa. На счёт зачисляются астрокоины для подписки, Таро и гороскопов.
+          {isTelegram
+            ? 'В Telegram — звёздами; картой — через ЮKassa ниже. Астрокоины идут на подписку, Таро и гороскопы.'
+            : 'Оплата картой через ЮKassa. На счёт зачисляются астрокоины для подписки, Таро и гороскопов.'}
         </p>
-        <p className="profile-topup-rate" aria-label="Курс: один рубль равен одному астрокоину">
-          <span className="profile-topup-rate-item">1 ₽</span>
-          <span className="profile-topup-rate-arrow" aria-hidden>
-            →
-          </span>
-          <span className="profile-topup-rate-item profile-topup-rate-item--gold">1 ✦</span>
-        </p>
+        {!isTelegram ? (
+          <p className="profile-topup-rate" aria-label="Курс: один рубль равен одному астрокоину">
+            <span className="profile-topup-rate-item">1 ₽</span>
+            <span className="profile-topup-rate-arrow" aria-hidden>
+              →
+            </span>
+            <span className="profile-topup-rate-item profile-topup-rate-item--gold">1 ✦</span>
+          </p>
+        ) : null}
       </header>
+
+      {isTelegram ? (
+        <AstrocoinTopupStars
+          token={token}
+          astrocoins={astrocoins}
+          applyAstrocoinsFromResponse={applyAstrocoinsFromResponse}
+        />
+      ) : null}
+
+      {isTelegram ? (
+        <h3 className="profile-topup-subheading">Оплата картой</h3>
+      ) : null}
 
       <label className="profile-topup-email">
         <span className="profile-topup-email-label">Email для чека</span>

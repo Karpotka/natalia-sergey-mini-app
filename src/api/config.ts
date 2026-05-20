@@ -1,11 +1,8 @@
 import { isMiniAppEnvironment } from '../platform/detectPlatform';
+import { getApiBase } from './resolveApiBase';
 
-const rawDefault = 'https://serg.srvmysticode.ru';
-const rawEnv = (import.meta.env.VITE_API_BASE as string | undefined) ?? rawDefault;
-const trimmed = typeof rawEnv === 'string' ? rawEnv.trim() : '';
-
-/** Пустая `VITE_API_BASE` в CI даёт относительный URL и ломает все запросы — откатываемся на дефолт. */
-export const API_BASE = (trimmed.length > 0 ? trimmed : rawDefault).replace(/\/$/, '');
+/** @deprecated используйте getApiBase() — для same-origin база зависит от window.location. */
+export const API_BASE = getApiBase();
 
 export const DOCS_URL = 'https://serg.srvmysticode.ru/docs/#/';
 

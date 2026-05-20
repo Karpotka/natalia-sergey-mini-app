@@ -75,6 +75,19 @@ export async function openVkOrderPayment(raw: unknown): Promise<{ ok: true } | {
  * Открывает внешнюю оплату (ЮKassa и т.п.).
  * В VK WebView на телефоне `window.open` часто блокируется — используем VKWebAppOpenURL.
  */
+/** Invoice Telegram Stars (`POST /createInvoiceStars` → `Telegram.WebApp.openInvoice`). */
+export async function openTelegramStarsInvoice(
+  url: string,
+): Promise<{ ok: true } | { error: string }> {
+  if (!isTelegramMiniAppEnvironment()) {
+    return { error: 'Оплата звёздами доступна только в Telegram.' };
+  }
+  if (!url || !/t\.me\//i.test(url)) {
+    return { error: 'Сервер не вернул ссылку invoice Telegram.' };
+  }
+  return openTelegramInvoice(url);
+}
+
 function openTelegramInvoice(url: string): Promise<{ ok: true } | { error: string }> {
   const tg = window.Telegram?.WebApp;
   if (!tg?.openInvoice) return Promise.resolve({ error: 'Telegram WebApp недоступен.' });

@@ -1772,6 +1772,49 @@ button.consult-expert-card--action:focus-visible {
 
 /* ——— Пополнение астрокоинов (кабинет) ——— */
 
+.profile-topup-stars {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+}
+
+.profile-topup-stars-title {
+  margin: 0 0 6px;
+  font-family: var(--font-display, serif);
+  font-size: 1.05rem;
+  color: var(--celestial-gold-bright, #e8c547);
+}
+
+.profile-topup-stars-lead {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--celestial-text-soft, rgba(245, 247, 250, 0.78));
+}
+
+.profile-topup-stars-check-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.profile-topup-subheading {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--celestial-text-soft, rgba(245, 247, 250, 0.85));
+}
+
+.profile-topup-pack-stars {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7eb8ff;
+}
+
+.profile-topup-packs--stars .profile-topup-pack-btn--stars {
+  font-size: 13px;
+}
+
 .profile-topup {
   max-width: 520px;
   margin: 18px auto 0;

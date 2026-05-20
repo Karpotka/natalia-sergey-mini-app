@@ -23,5 +23,14 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: false,
+    /** Локальная отладка Telegram/VK без CORS: VITE_API_BASE=/api в .env.development */
+    proxy: {
+      '/api': {
+        target: 'https://serg.srvmysticode.ru',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (p) => p.replace(/^\/api/, ''),
+      },
+    },
   },
 });
