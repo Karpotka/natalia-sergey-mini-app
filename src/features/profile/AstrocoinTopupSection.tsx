@@ -1,83 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ApiError, isNetworkApiError } from '../../api/client';
-import {
-  crystalMoneyPackages,
-  paymentsYookassaCardInvoice,
-  profileGet,
-  type CrystalPackMoney,
-} from '../../api/mysticApi';
+import { crystalMoneyPackages, paymentsYookassaCardInvoice, profileGet } from '../../api/mysticApi';
 import { useSession } from '../../context/SessionContext';
-import { AstrocoinTopupStars } from './AstrocoinTopupStars';
 import { pickWalletAstrocoinBalance } from '../../lib/astrocoinsBalance';
 import { clearPaymentFlowState, markPaymentFlowStarted, readPaymentFlowState } from '../../lib/paymentFlowSession';
 import { invoiceUrlFromPaymentResponse, openPaymentInvoiceUrl } from '../../lib/paymentGateway';
 import { formatPaymentOrOrderErrorForUser, formatPaymentUserFacingMessage } from '../../lib/paymentUserErrors';
-
-const TOPUP_AMOUNTS = [100, 500, 1000, 3000, 5000] as const;
-
-type PackMeta = { id: number; priceMoney?: number };
-
-function formatCoinsNumber(n: number): string {
-  return new Intl.NumberFormat('ru-RU').format(n).replace(/\u00a0/g, ' ');
-}
-
-function formatRub(n: number): string {
-  return formatCoinsNumber(n) + ' ₽';
-}
-
-function readCrystalPackIdFromEnv(amount: number): number | null {
-  const key =
-    amount === 100
-      ? 'VITE_CRYSTAL_PACK_ID_100'
-      : amount === 500
-        ? 'VITE_CRYSTAL_PACK_ID_500'
-        : amount === 1000
-          ? 'VITE_CRYSTAL_PACK_ID_1000'
-          : amount === 3000
-            ? 'VITE_CRYSTAL_PACK_ID_3000'
-            : amount === 5000
-              ? 'VITE_CRYSTAL_PACK_ID_5000'
-              : '';
-  if (!key) return null;
-  const raw = (import.meta.env as Record<string, string | undefined>)[key];
-  const n = Number(String(raw ?? '').trim());
-  return Number.isFinite(n) && n > 0 ? Math.trunc(n) : null;
-}
-
-function buildPackMap(packs: CrystalPackMoney[]): Partial<Record<number, PackMeta>> {
-  const out: Partial<Record<number, PackMeta>> = {};
-  for (const amount of TOPUP_AMOUNTS) {
-    const fromEnv = readCrystalPackIdFromEnv(amount);
-    if (fromEnv) {
-      const row = packs.find((p) => p.id === fromEnv);
-      out[amount] = {
-        id: fromEnv,
-        priceMoney: row && Number.isFinite(row.price_money) ? Math.round(row.price_money) : amount,
-      };
-      continue;
-    }
-    const row = packs.find((p) => Number(p.crystals) === amount);
-    if (row?.id && row.id > 0) {
-      out[amount] = {
-        id: row.id,
-        priceMoney: Number.isFinite(row.price_money) ? Math.round(row.price_money) : amount,
-      };
-    }
-  }
-  return out;
-}
-
-function formatTopupLoadError(error: unknown): string {
-  if (error instanceof ApiError && isNetworkApiError(error)) {
-    return 'Нет связи с сервером. Проверьте интернет и попробуйте снова.';
-  }
-  return 'Не удалось загрузить номиналы. Попробуйте чуть позже.';
-}
+import { AstrocoinTopupTelegram } from './AstrocoinTopupTelegram';
+import {
+  buildMoneyPackMap,
+  formatCoinsNumber,
+  formatRub,
+  formatTopupLoadError,
+  TOPUP_AMOUNTS,
+} from './topupShared';
 
 export function AstrocoinTopupSection() {
   const { token, astrocoins, platform, applyAstrocoinsFromResponse } = useSession();
   const isTelegram = platform === 'telegram';
-  const [packMeta, setPackMeta] = useState<Partial<Record<number, PackMeta>>>({});
+
+  const [packMeta, setPackMeta] = useState(buildMoneyPackMap([]));
   const [packsLoading, setPacksLoading] = useState(false);
   const [packsError, setPacksError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
@@ -88,7 +29,7 @@ export function AstrocoinTopupSection() {
   const baselineRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || isTelegram) return;
     let cancelled = false;
     setPacksLoading(true);
     setPacksError(null);
@@ -96,11 +37,11 @@ export function AstrocoinTopupSection() {
       try {
         const packs = await crystalMoneyPackages();
         if (cancelled) return;
-        setPackMeta(buildPackMap(Array.isArray(packs) ? packs : []));
+        setPackMeta(buildMoneyPackMap(Array.isArray(packs) ? packs : []));
       } catch (e) {
         if (!cancelled) {
           setPacksError(formatTopupLoadError(e));
-          setPackMeta(buildPackMap([]));
+          setPackMeta(buildMoneyPackMap([]));
         }
       } finally {
         if (!cancelled) setPacksLoading(false);
@@ -109,7 +50,7 @@ export function AstrocoinTopupSection() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, isTelegram]);
 
   useEffect(() => {
     setPendingTopup(readPaymentFlowState()?.kind === 'crystal_topup');
@@ -140,7 +81,7 @@ export function AstrocoinTopupSection() {
   }, [token, applyAstrocoinsFromResponse]);
 
   useEffect(() => {
-    if (!pendingTopup || !token) return;
+    if (!pendingTopup || !token || isTelegram) return;
     let stopped = false;
     let tries = 0;
     const tick = async () => {
@@ -154,12 +95,12 @@ export function AstrocoinTopupSection() {
     return () => {
       stopped = true;
     };
-  }, [pendingTopup, token, tryDetectCredit]);
+  }, [pendingTopup, token, tryDetectCredit, isTelegram]);
 
   const onPay = async (amount: number) => {
     setNotice(null);
     if (!token) {
-      setNotice(isTelegram ? 'Войдите через Telegram, чтобы пополнить счёт.' : 'Войдите через VK, чтобы пополнить счёт.');
+      setNotice('Войдите через VK, чтобы пополнить счёт.');
       return;
     }
     const meta = packMeta[amount];
@@ -213,8 +154,8 @@ export function AstrocoinTopupSection() {
         </h2>
         <p className="profile-topup-lead">
           {isTelegram
-            ? 'В Telegram — звёздами; картой — через ЮKassa ниже. Астрокоины идут на подписку, Таро и гороскопы.'
-            : 'Оплата картой через ЮKassa. На счёт зачисляются астрокоины для подписки, Таро и гороскопов.'}
+            ? 'Выберите сумму и способ оплаты — всё в одном экране.'
+            : 'Оплата картой через ЮKassa. Астрокоины — для подписки, Таро и гороскопов.'}
         </p>
         {!isTelegram ? (
           <p className="profile-topup-rate" aria-label="Курс: один рубль равен одному астрокоину">
@@ -228,90 +169,95 @@ export function AstrocoinTopupSection() {
       </header>
 
       {isTelegram ? (
-        <AstrocoinTopupStars
+        <AstrocoinTopupTelegram
           token={token}
           astrocoins={astrocoins}
           applyAstrocoinsFromResponse={applyAstrocoinsFromResponse}
         />
-      ) : null}
+      ) : (
+        <>
+          <label className="profile-topup-email">
+            <span className="profile-topup-email-label">Email для чека</span>
+            <input
+              className="profile-topup-email-input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              autoComplete="email"
+              inputMode="email"
+            />
+          </label>
 
-      {isTelegram ? (
-        <h3 className="profile-topup-subheading">Оплата картой</h3>
-      ) : null}
+          {packsLoading ? (
+            <p className="profile-topup-status">Загружаем номиналы…</p>
+          ) : packsError ? (
+            <div className="profile-topup-alert profile-topup-alert--error" role="alert">
+              {packsError}
+            </div>
+          ) : null}
 
-      <label className="profile-topup-email">
-        <span className="profile-topup-email-label">Email для чека</span>
-        <input
-          className="profile-topup-email-input"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="name@example.com"
-          autoComplete="email"
-          inputMode="email"
-        />
-      </label>
+          <ul className="profile-topup-packs" role="list" aria-label="Номиналы пополнения">
+            {TOPUP_AMOUNTS.map((amount) => {
+              const meta = packMeta[amount];
+              const rub = meta?.priceMoney ?? amount;
+              const busy = payLoadingAmount === amount;
+              const disabled = !meta?.id || payLoadingAmount !== null;
+              const popular = amount === 1000;
 
-      {packsLoading ? (
-        <p className="profile-topup-status">Загружаем номиналы…</p>
-      ) : packsError ? (
-        <div className="profile-topup-alert profile-topup-alert--error" role="alert">
-          {packsError}
-        </div>
-      ) : null}
+              return (
+                <li
+                  key={amount}
+                  className={
+                    'profile-topup-pack' +
+                    (popular ? ' profile-topup-pack--popular' : '') +
+                    (disabled && !packsLoading ? ' profile-topup-pack--disabled' : '')
+                  }
+                >
+                  {popular ? <span className="profile-topup-pack-badge">Популярный</span> : null}
+                  <div className="profile-topup-pack-body">
+                    <div className="profile-topup-pack-coins" aria-label={`${amount} астрокоинов`}>
+                      <span className="profile-topup-pack-symbol" aria-hidden>
+                        ✦
+                      </span>
+                      <span className="profile-topup-pack-value">{formatCoinsNumber(amount)}</span>
+                    </div>
+                    <p className="profile-topup-pack-rub">{formatRub(rub)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="profile-topup-pack-btn btn-primary"
+                    disabled={disabled || packsLoading}
+                    onClick={() => void onPay(amount)}
+                  >
+                    {busy ? 'Открываем…' : 'Оплатить'}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
 
-      <ul className="profile-topup-packs" role="list" aria-label="Номиналы пополнения">
-        {TOPUP_AMOUNTS.map((amount) => {
-          const meta = packMeta[amount];
-          const rub = meta?.priceMoney ?? amount;
-          const busy = payLoadingAmount === amount;
-          const disabled = !meta?.id || payLoadingAmount !== null;
-          const popular = amount === 1000;
-
-          return (
-            <li
-              key={amount}
-              className={
-                'profile-topup-pack' + (popular ? ' profile-topup-pack--popular' : '') + (disabled && !packsLoading ? ' profile-topup-pack--disabled' : '')
-              }
-            >
-              {popular ? <span className="profile-topup-pack-badge">Популярный</span> : null}
-              <div className="profile-topup-pack-body">
-                <div className="profile-topup-pack-coins" aria-label={`${amount} астрокоинов`}>
-                  <span className="profile-topup-pack-symbol" aria-hidden>
-                    ✦
-                  </span>
-                  <span className="profile-topup-pack-value">{formatCoinsNumber(amount)}</span>
-                </div>
-                <p className="profile-topup-pack-rub">{formatRub(rub)}</p>
-              </div>
+          {pendingTopup ? (
+            <div className="profile-topup-pending">
+              <p className="profile-topup-pending-text">Ожидаем оплату в ЮKassa</p>
               <button
                 type="button"
-                className="profile-topup-pack-btn btn-primary"
-                disabled={disabled || packsLoading}
-                onClick={() => void onPay(amount)}
+                className="btn-ghost profile-topup-check-btn"
+                disabled={checkingTopup}
+                onClick={() => void onCheckManual()}
               >
-                {busy ? 'Открываем…' : 'Оплатить'}
+                {checkingTopup ? 'Проверяем…' : 'Проверить зачисление'}
               </button>
-            </li>
-          );
-        })}
-      </ul>
+            </div>
+          ) : null}
 
-      {pendingTopup ? (
-        <div className="profile-topup-pending">
-          <p className="profile-topup-pending-text">Ожидаем оплату в ЮKassa</p>
-          <button type="button" className="btn-ghost profile-topup-check-btn" disabled={checkingTopup} onClick={() => void onCheckManual()}>
-            {checkingTopup ? 'Проверяем…' : 'Проверить зачисление'}
-          </button>
-        </div>
-      ) : null}
-
-      {notice ? (
-        <div className="profile-topup-alert profile-topup-alert--notice" role="status">
-          {notice}
-        </div>
-      ) : null}
+          {notice ? (
+            <div className="profile-topup-alert profile-topup-alert--notice" role="status">
+              {notice}
+            </div>
+          ) : null}
+        </>
+      )}
     </section>
   );
 }

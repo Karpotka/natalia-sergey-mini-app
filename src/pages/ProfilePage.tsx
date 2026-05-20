@@ -8,15 +8,16 @@ import {
   profileGet,
   subscribeBuy,
   type ProfileAddParamBody,
-  type ProfileApiModel,
   type ProfileSex,
 } from '../api/mysticApi';
 import { isProfileComplete, useProfile, type UserGender, type UserProfile } from '../context/ProfileContext';
 import { useSession } from '../context/SessionContext';
+import { profileFromApi } from '../lib/profileFromApi';
 import { clearPaymentFlowState, readPaymentFlowState } from '../lib/paymentFlowSession';
 import { formatPaymentOrOrderErrorForUser } from '../lib/paymentUserErrors';
 import { fetchPlaceSuggestions, type PlaceSuggestion } from '../lib/placeSearch';
 import { AstrocoinTopupSection } from '../features/profile/AstrocoinTopupSection';
+import { TarotBackEquipStrip } from '../features/tarot/TarotBackEquipStrip';
 import { TarotBackShopSection } from '../features/tarot/TarotBackShopSection';
 import { readProductPanel } from '../layout/ProductPager';
 
@@ -51,30 +52,6 @@ function subscriptionProductId(planId: (typeof SUBSCRIPTION_PLANS)[number]['id']
 function normalizeSex(gender: UserGender | ''): ProfileSex | null {
   if (gender === 'female' || gender === 'male') return gender;
   return null;
-}
-
-function readBool(v: unknown): boolean | undefined {
-  if (typeof v === 'boolean') return v;
-  if (v === 1 || v === '1' || v === 'true') return true;
-  if (v === 0 || v === '0' || v === 'false') return false;
-  return undefined;
-}
-
-function profileFromApi(p: ProfileApiModel): UserProfile {
-  const sex = p.sex === 'female' || p.sex === 'male' ? p.sex : '';
-  const rawTime = typeof p.birth_time === 'string' ? p.birth_time.trim() : '';
-  const hasExact = readBool(p.has_exact_time) === true;
-  const birthTimeUnknown = !hasExact;
-  const birthTime =
-    hasExact && rawTime.length >= 5 && /^\d{2}:\d{2}/.test(rawTime) ? rawTime.slice(0, 5) : '';
-  return {
-    name: typeof p.name === 'string' ? p.name : '',
-    birthDate: typeof p.birth_date === 'string' ? p.birth_date : '',
-    birthTime,
-    birthPlace: typeof p.place_name === 'string' ? p.place_name : '',
-    gender: sex,
-    birthTimeUnknown,
-  };
 }
 
 /** Бэкенд ожидает время как `HH:MM`, не `HH:MM:SS`. */
@@ -144,7 +121,8 @@ export function ProfilePage() {
   const { profile, setProfile } = useProfile();
   const [searchParams] = useSearchParams();
   const panel = readProductPanel(searchParams);
-  const { token, astrocoins, authMode, applyAstrocoinsFromResponse, refreshAstrocoinsFromProfile } = useSession();
+  const { token, astrocoins, authMode, platform, applyAstrocoinsFromResponse, refreshAstrocoinsFromProfile } =
+    useSession();
   const backendOn = isBackendEnabled();
   const [local, setLocal] = useState<UserProfile>(() => ({ ...profile }));
   const [savedFlash, setSavedFlash] = useState(false);
@@ -482,18 +460,23 @@ export function ProfilePage() {
           </p>
         ) : token ? (
           <p className="profile-astrocoins-lead" style={{ marginBottom: 0 }}>
-            Зайдите в приложение через VK — мы автоматически покажем ваш баланс астрокоинов.
+            {platform === 'telegram'
+              ? 'Баланс подтянется после входа через Telegram.'
+              : 'Зайдите в приложение через VK — мы автоматически покажем ваш баланс астрокоинов.'}
           </p>
         ) : (
           <p className="profile-astrocoins-lead" style={{ marginBottom: 0 }}>
-            Войдите через VK, чтобы увидеть свой счёт астрокоинов.
+            {platform === 'telegram'
+              ? 'Войдите через Telegram, чтобы увидеть счёт астрокоинов.'
+              : 'Войдите через VK, чтобы увидеть свой счёт астрокоинов.'}
           </p>
         )}
       </section>
 
       {backendOn ? <AstrocoinTopupSection /> : null}
 
-      <TarotBackShopSection />
+      {backendOn && platform === 'telegram' ? <TarotBackEquipStrip /> : null}
+      {backendOn && platform !== 'telegram' ? <TarotBackShopSection /> : null}
 
       <section className="profile-subscription" aria-labelledby="profile-subscription-heading">
         <h2 id="profile-subscription-heading" className="profile-subscription-title">

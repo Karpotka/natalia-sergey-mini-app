@@ -7,8 +7,10 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { profileStorageKey, readAccountStorageSuffix } from '../lib/accountScope';
+import { useSession } from './SessionContext';
 
-const STORAGE_KEY = 'natalia-sergey-user-profile';
+const LEGACY_PROFILE_KEY = 'natalia-sergey-user-profile';
 
 export type UserGender = 'female' | 'male';
 
@@ -32,19 +34,34 @@ const EMPTY: UserProfile = {
   birthTimeUnknown: false,
 };
 
+function parseProfileRaw(raw: string): UserProfile {
+  const p = JSON.parse(raw) as Partial<UserProfile>;
+  return {
+    name: typeof p.name === 'string' ? p.name : '',
+    birthDate: typeof p.birthDate === 'string' ? p.birthDate : '',
+    birthTime: typeof p.birthTime === 'string' ? p.birthTime : '',
+    birthPlace: typeof p.birthPlace === 'string' ? p.birthPlace : '',
+    gender: p.gender === 'female' || p.gender === 'male' ? p.gender : '',
+    birthTimeUnknown: p.birthTimeUnknown === true,
+  };
+}
+
 function loadStored(): UserProfile {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const key = profileStorageKey();
+    let raw = localStorage.getItem(key);
+    if (!raw) {
+      const suffix = readAccountStorageSuffix();
+      if (suffix && !suffix.startsWith('_tg')) {
+        const legacy = localStorage.getItem(LEGACY_PROFILE_KEY);
+        if (legacy) {
+          localStorage.setItem(key, legacy);
+          raw = legacy;
+        }
+      }
+    }
     if (!raw) return { ...EMPTY };
-    const p = JSON.parse(raw) as Partial<UserProfile>;
-    return {
-      name: typeof p.name === 'string' ? p.name : '',
-      birthDate: typeof p.birthDate === 'string' ? p.birthDate : '',
-      birthTime: typeof p.birthTime === 'string' ? p.birthTime : '',
-      birthPlace: typeof p.birthPlace === 'string' ? p.birthPlace : '',
-      gender: p.gender === 'female' || p.gender === 'male' ? p.gender : '',
-      birthTimeUnknown: p.birthTimeUnknown === true,
-    };
+    return parseProfileRaw(raw);
   } catch {
     return { ...EMPTY };
   }
@@ -92,17 +109,19 @@ type ProfileContextValue = {
 const ProfileContext = createContext<ProfileContextValue | null>(null);
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
+  const { authMode, platform } = useSession();
   const [profile, setProfileState] = useState<UserProfile>(() =>
     typeof window !== 'undefined' ? loadStored() : { ...EMPTY },
   );
 
   useEffect(() => {
+    if (authMode === 'idle') return;
     setProfileState(loadStored());
-  }, []);
+  }, [authMode, platform]);
 
   const persist = useCallback((next: UserProfile) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(profileStorageKey(), JSON.stringify(next));
     } catch {
       /* */
     }
@@ -118,7 +137,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       setProfileState((prev) => {
         const next = { ...prev, [key]: value };
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+          localStorage.setItem(profileStorageKey(), JSON.stringify(next));
         } catch {
           /* */
         }

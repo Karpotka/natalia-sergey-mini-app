@@ -40,6 +40,14 @@ export function hasTelegramAuthInitData(): boolean {
   return readTelegramInitData().length > 0;
 }
 
+/** `user.id` из initDataUnsafe — для ключей профиля/онбординга на устройстве. */
+export function readTelegramUserId(): string | null {
+  const id = webApp()?.initDataUnsafe?.user?.id;
+  if (id == null) return null;
+  const s = String(id).trim();
+  return /^\d+$/.test(s) ? s : null;
+}
+
 /** `start_param` из initDataUnsafe (реферал). */
 export function readTelegramReferralParam(): string | null {
   const start = webApp()?.initDataUnsafe?.start_param?.trim();

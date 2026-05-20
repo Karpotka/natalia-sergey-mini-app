@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useProfile, type UserGender } from '../context/ProfileContext';
+import { isBackendEnabled } from '../api/config';
+import { useProfile, type UserGender, type UserProfile } from '../context/ProfileContext';
+import { useSession } from '../context/SessionContext';
 import {
   markOnboardingDone,
-  markOnboardingSkipped,
   writeOnboardingInterests,
   type OnboardingInterest,
 } from '../lib/onboardingStorage';
+import { persistOnboardingProfileToServer } from '../lib/onboardingProfileSync';
 import './onboarding.css';
 
 type Props = {
@@ -71,7 +73,10 @@ function MoonArt() {
 
 export function OnboardingWizard({ onFinished }: Props) {
   const { profile, setProfile } = useProfile();
+  const { token } = useSession();
+  const backendOn = isBackendEnabled();
   const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
   const [interests, setInterests] = useState<Set<OnboardingInterest>>(
     () => new Set<OnboardingInterest>(['moon', 'astrology']),
   );
@@ -127,16 +132,31 @@ export function OnboardingWizard({ onFinished }: Props) {
       return;
     }
 
-    setProfile({
+    const next: UserProfile = {
       ...profile,
       name: n,
       birthDate,
       birthTime: t,
       gender,
-    });
-    markOnboardingDone();
-    onFinished();
-  }, [birthDate, birthTime, gender, name, onFinished, profile, setProfile]);
+      birthTimeUnknown: !t,
+    };
+
+    void (async () => {
+      setSaving(true);
+      try {
+        if (backendOn && token) {
+          await persistOnboardingProfileToServer(next, token);
+        }
+        setProfile(next);
+        markOnboardingDone();
+        onFinished();
+      } catch {
+        setFormError('Не удалось сохранить профиль. Проверьте сеть и попробуйте снова.');
+      } finally {
+        setSaving(false);
+      }
+    })();
+  }, [backendOn, birthDate, birthTime, gender, name, onFinished, profile, setProfile, token]);
 
   const toggleInterest = (id: OnboardingInterest) => {
     setInterests((prev) => {
@@ -148,9 +168,12 @@ export function OnboardingWizard({ onFinished }: Props) {
   };
 
   const skip = useCallback(() => {
-    markOnboardingSkipped();
-    onFinished();
-  }, [onFinished]);
+    if (step < 3) {
+      setFormError(null);
+      setStep(3);
+      return;
+    }
+  }, [step]);
 
   const dots = (
     <div className="onboarding-dots" aria-hidden>
@@ -171,9 +194,13 @@ export function OnboardingWizard({ onFinished }: Props) {
           ) : (
             <span className="onboarding-topbar-spacer" aria-hidden />
           )}
-          <button type="button" className="onboarding-skip" onClick={skip}>
-            Пропустить
-          </button>
+          {step < 3 ? (
+            <button type="button" className="onboarding-skip" onClick={skip}>
+              Пропустить
+            </button>
+          ) : (
+            <span className="onboarding-topbar-spacer" aria-hidden />
+          )}
         </div>
 
         {step === 0 && (
@@ -321,8 +348,13 @@ export function OnboardingWizard({ onFinished }: Props) {
               ) : null}
             </div>
             <div className="onboarding-actions">
-              <button type="button" className="onboarding-btn onboarding-btn--primary" onClick={finish}>
-                Продолжить
+              <button
+                type="button"
+                className="onboarding-btn onboarding-btn--primary"
+                onClick={finish}
+                disabled={saving}
+              >
+                {saving ? 'Сохраняем…' : 'Продолжить'}
               </button>
             </div>
             {dots}

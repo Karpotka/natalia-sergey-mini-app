@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useSession } from '../../context/SessionContext';
+
+/** Витрина покупки обложек — только VK и браузер (в Telegram см. TarotBackEquipStrip). */
 import { useTarotBackSkin } from '../../context/TarotBackSkinContext';
 import { localTarotBackImageUrl } from './tarotBackCatalog';
 

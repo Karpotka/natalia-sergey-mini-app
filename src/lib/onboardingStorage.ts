@@ -1,25 +1,27 @@
+import { readAccountStorageSuffix, profileStorageKey } from './accountScope';
+import { isOnboardingProfileSatisfied } from './profileFromApi';
+import type { UserProfile } from '../context/ProfileContext';
 import { readVkUserIdFromCachedLaunchParams } from '../vk/vkLaunchParams';
 
 /** Исторический ключ до привязки к vk_user_id. */
 const LEGACY_ONBOARDING_KEY = 'natalia-sergey-onboarding-v1';
-const PROFILE_STORAGE = 'natalia-sergey-user-profile';
+const LEGACY_PROFILE_KEY = 'natalia-sergey-user-profile';
 
 export type OnboardingInterest = 'moon' | 'astrology' | 'tarot' | 'tarot_day' | 'consultations';
 
-function vkUserSuffix(): string {
-  const uid = readVkUserIdFromCachedLaunchParams();
-  return uid ? `_u${uid}` : '';
+function userSuffix(): string {
+  return readAccountStorageSuffix();
 }
 
-/** Флаг «онбординг завершён / пропущен» — отдельно для каждого VK-пользователя на устройстве. */
+/** Флаг «онбординг завершён / пропущен» — отдельно для каждого пользователя на устройстве. */
 function onboardingFlagKey(): string {
-  return `${LEGACY_ONBOARDING_KEY}${vkUserSuffix()}`;
+  return `${LEGACY_ONBOARDING_KEY}${userSuffix()}`;
 }
 
 const LEGACY_INTERESTS_KEY = 'natalia-sergey-onboarding-interests';
 
 function interestsStorageKey(): string {
-  return `${LEGACY_INTERESTS_KEY}${vkUserSuffix()}`;
+  return `${LEGACY_INTERESTS_KEY}${userSuffix()}`;
 }
 
 function migrateLegacyInterestsIfNeeded(): void {
@@ -52,6 +54,24 @@ function migrateLegacyOnboardingIfNeeded(): void {
     }
   } catch {
     /* */
+  }
+}
+
+function readScopedProfile(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(profileStorageKey());
+    if (!raw) return null;
+    const p = JSON.parse(raw) as Partial<UserProfile>;
+    return {
+      name: typeof p.name === 'string' ? p.name : '',
+      birthDate: typeof p.birthDate === 'string' ? p.birthDate : '',
+      birthTime: typeof p.birthTime === 'string' ? p.birthTime : '',
+      birthPlace: typeof p.birthPlace === 'string' ? p.birthPlace : '',
+      gender: p.gender === 'female' || p.gender === 'male' ? p.gender : '',
+      birthTimeUnknown: p.birthTimeUnknown === true,
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -97,29 +117,38 @@ export function markOnboardingSkipped() {
 }
 
 /**
- * Показать онбординг один раз: нет флага done/skipped для этого пользователя (или общий legacy-ключ).
- * Если в локальном профиле уже есть имя и дата рождения — считаем пользователя «не новым» и не показываем.
+ * Показать онбординг, пока не заполнены имя, дата рождения и пол (локально или на сервере).
+ * «Пропустить» на вводных шагах не отменяет обязательный шаг профиля.
  */
 export function shouldShowOnboarding(): boolean {
   if (typeof window === 'undefined') return false;
   migrateLegacyOnboardingIfNeeded();
-  const key = onboardingFlagKey();
-  const flag = localStorage.getItem(key);
-  if (flag === 'done' || flag === 'skipped') return false;
 
-  try {
-    const raw = localStorage.getItem(PROFILE_STORAGE);
-    if (raw) {
-      const p = JSON.parse(raw) as { name?: string; birthDate?: string };
-      const nameOk = typeof p.name === 'string' && p.name.trim().length > 0;
-      const dateOk = typeof p.birthDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.birthDate);
-      if (nameOk && dateOk) {
-        localStorage.setItem(key, 'done');
-        return false;
-      }
-    }
-  } catch {
-    /* */
+  const scoped = readScopedProfile();
+  if (scoped && isOnboardingProfileSatisfied(scoped)) {
+    markOnboardingDone();
+    return false;
   }
+
+  // Не подтягиваем глобальный legacy-профиль в Telegram — иначе чужой VK-профиль скрывает форму.
+  const suffix = userSuffix();
+  if (!suffix.startsWith('_tg') && !scoped) {
+    try {
+      const legacyRaw = localStorage.getItem(LEGACY_PROFILE_KEY);
+      if (legacyRaw) {
+        const p = JSON.parse(legacyRaw) as Partial<UserProfile>;
+        if (isOnboardingProfileSatisfied({
+          name: typeof p.name === 'string' ? p.name : '',
+          birthDate: typeof p.birthDate === 'string' ? p.birthDate : '',
+          gender: p.gender === 'female' || p.gender === 'male' ? p.gender : '',
+        })) {
+          return false;
+        }
+      }
+    } catch {
+      /* */
+    }
+  }
+
   return true;
 }
