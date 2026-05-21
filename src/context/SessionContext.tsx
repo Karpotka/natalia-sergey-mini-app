@@ -4,7 +4,12 @@ import { isBackendEnabled, readDevBearer } from '../api/config';
 import { initUserDailyRune, profileGet, vkMiniAppInit, type InitUserResponse, type VkInitResponse } from '../api/mysticApi';
 import { pickWalletAstrocoinBalance } from '../lib/astrocoinsBalance';
 import { detectAppPlatform, type AppPlatform } from '../platform/detectPlatform';
-import { extractInitJwt, initResponseDenied, readEquipBackgroundId } from '../session/authHelpers';
+import {
+  extractInitJwt,
+  initResponseDenied,
+  readEquipBackgroundId,
+  readNewUserCreatedFromInit,
+} from '../session/authHelpers';
 import {
   AUTH_NO_JWT,
   AUTH_OPEN_FROM_APP,
@@ -38,6 +43,9 @@ type SessionValue = {
   authMode: AuthMode;
   authMessage: string | null;
   platform: AppPlatform | null;
+  /** true — пользователь создан на бэке при этом init (нужен онбординг). */
+  newUserCreated: boolean | null;
+  authReady: boolean;
   backendEnabled: boolean;
   astrocoins: number | null;
   applyAstrocoinsFromResponse: (raw: unknown) => void;
@@ -57,6 +65,7 @@ function applyInitSuccess(
     setAuthMessage: (m: string | null) => void;
     setAstrocoins: (n: number | null) => void;
     setEquippedTarotBackgroundId: (id: number | null) => void;
+    setNewUserCreated: (v: boolean) => void;
   },
   authMode: 'vk_token' | 'tg_token',
 ): boolean {
@@ -71,6 +80,7 @@ function applyInitSuccess(
   setters.setToken(jwt);
   setters.setAuthMode(authMode);
   setters.setAuthMessage(null);
+  setters.setNewUserCreated(readNewUserCreatedFromInit(data));
   const bal = pickWalletAstrocoinBalance(data);
   setters.setAstrocoins(bal !== undefined ? bal : null);
   setters.setEquippedTarotBackgroundId(readEquipBackgroundId(data));
@@ -84,6 +94,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [platform, setPlatform] = useState<AppPlatform | null>(null);
   const [astrocoins, setAstrocoins] = useState<number | null>(null);
   const [equippedTarotBackgroundId, setEquippedTarotBackgroundId] = useState<number | null>(null);
+  const [newUserCreated, setNewUserCreated] = useState<boolean | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   const backendEnabled = isBackendEnabled();
 
@@ -105,13 +117,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [backendEnabled, token, applyAstrocoinsFromResponse]);
 
   const refreshInit = useCallback(async () => {
+    setAuthReady(false);
     if (!backendEnabled) {
       setToken(null);
       setAstrocoins(null);
       setEquippedTarotBackgroundId(null);
+      setNewUserCreated(null);
       setPlatform(null);
       setAuthMode('preview');
       setAuthMessage(null);
+      setAuthReady(true);
       return;
     }
 
@@ -120,15 +135,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setToken(dev);
       setAstrocoins(null);
       setEquippedTarotBackgroundId(null);
+      setNewUserCreated(false);
       setPlatform(null);
       setAuthMode('dev_token');
       setAuthMessage('Режим отладки: используется VITE_DEV_BEARER_TOKEN.');
+      setAuthReady(true);
       return;
     }
 
     setToken(null);
     setAstrocoins(null);
     setEquippedTarotBackgroundId(null);
+    setNewUserCreated(null);
     setAuthMessage(null);
     setAuthMode('idle');
 
@@ -141,6 +159,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setAuthMessage,
       setAstrocoins,
       setEquippedTarotBackgroundId,
+      setNewUserCreated,
     };
 
     if (detected === 'telegram') {
@@ -150,26 +169,29 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setEquippedTarotBackgroundId(null);
         setAuthMode('auth_failed');
         setAuthMessage(AUTH_OPEN_FROM_APP);
+        setAuthReady(true);
         return;
       }
 
       try {
         const data = await initUserDailyRune(initData, null, readTelegramReferralParam());
-        if (
-          applyInitSuccess(data, setters, 'tg_token')
-        ) {
+        if (applyInitSuccess(data, setters, 'tg_token')) {
+          setAuthReady(true);
           return;
         }
         setEquippedTarotBackgroundId(null);
+        setNewUserCreated(false);
         setAuthMode('auth_failed');
         setAuthMessage(AUTH_NO_JWT);
       } catch (e) {
         setEquippedTarotBackgroundId(null);
+        setNewUserCreated(false);
         setAuthMode('auth_failed');
         const msg =
           e instanceof ApiError ? `${e.code}: ${e.message}` : e instanceof Error ? e.message : String(e);
         setAuthMessage(authFailedMessage(msg));
       }
+      setAuthReady(true);
       return;
     }
 
@@ -186,6 +208,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setEquippedTarotBackgroundId(null);
         setAuthMode('auth_failed');
         setAuthMessage(null);
+        setAuthReady(true);
         return;
       }
 
@@ -193,23 +216,31 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       try {
         const data = await vkMiniAppInit(launch, referral);
-        if (applyInitSuccess(data, setters, 'vk_token')) return;
+        if (applyInitSuccess(data, setters, 'vk_token')) {
+          setAuthReady(true);
+          return;
+        }
         setEquippedTarotBackgroundId(null);
+        setNewUserCreated(false);
         setAuthMode('auth_failed');
         setAuthMessage(AUTH_NO_JWT);
       } catch (e) {
         setEquippedTarotBackgroundId(null);
+        setNewUserCreated(false);
         setAuthMode('auth_failed');
         const msg =
           e instanceof ApiError ? `${e.code}: ${e.message}` : e instanceof Error ? e.message : String(e);
         setAuthMessage(authFailedMessage(msg));
       }
+      setAuthReady(true);
       return;
     }
 
     setEquippedTarotBackgroundId(null);
+    setNewUserCreated(false);
     setAuthMode('auth_failed');
     setAuthMessage(null);
+    setAuthReady(true);
   }, [backendEnabled]);
 
   useEffect(() => {
@@ -222,6 +253,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       authMode,
       authMessage,
       platform,
+      newUserCreated,
+      authReady,
       backendEnabled,
       astrocoins,
       applyAstrocoinsFromResponse,
@@ -235,6 +268,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       authMode,
       authMessage,
       platform,
+      newUserCreated,
+      authReady,
       backendEnabled,
       astrocoins,
       applyAstrocoinsFromResponse,

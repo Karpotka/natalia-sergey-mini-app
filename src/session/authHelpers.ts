@@ -37,3 +37,11 @@ export function extractInitJwt(raw: unknown): string | null {
 export function initResponseDenied(raw: unknown): boolean {
   return Boolean(raw && typeof raw === 'object' && (raw as Record<string, unknown>).allow === false);
 }
+
+/** `newUserCreated` из ответа init — для обязательного онбординга в Telegram/VK. */
+export function readNewUserCreatedFromInit(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const o = raw as Record<string, unknown>;
+  if (o.allow === false) return false;
+  return o.newUserCreated === true;
+}

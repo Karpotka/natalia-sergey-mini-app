@@ -3,7 +3,11 @@ import { isBackendEnabled } from '../api/config';
 import { profileGet } from '../api/mysticApi';
 import { useProfile } from '../context/ProfileContext';
 import { useSession } from '../context/SessionContext';
-import { markOnboardingDone, needsOnboardingWizard } from '../lib/onboardingStorage';
+import {
+  markOnboardingDone,
+  needsOnboardingWizard,
+  readOnboardingFlag,
+} from '../lib/onboardingStorage';
 import {
   isOnboardingProfileSatisfiedOnServer,
   profileFromApi,
@@ -11,27 +15,45 @@ import {
 import { useAccountStorageKey } from '../lib/useAccountStorageKey';
 import { OnboardingWizard } from './OnboardingWizard';
 
-/** Обязательный профиль при первом входе; скрываем только после подтверждения на сервере или явного завершения мастера. */
+function hasApiSession(authMode: string, token: string | null): boolean {
+  return (
+    Boolean(token) &&
+    (authMode === 'vk_token' || authMode === 'tg_token' || authMode === 'dev_token')
+  );
+}
+
+/**
+ * Обязательный профиль при первом входе.
+ * Новый пользователь (newUserCreated) — всегда мастер до markOnboardingDone, даже если бэк отдал «пустой» профиль с дефолтами.
+ */
 export function OnboardingGate() {
-  const { authMode, token } = useSession();
+  const { authMode, token, newUserCreated, authReady } = useSession();
   const { setProfile } = useProfile();
   const storageKey = useAccountStorageKey();
   const backendOn = isBackendEnabled();
-  const [visible, setVisible] = useState(() => needsOnboardingWizard());
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    if (needsOnboardingWizard()) {
-      setVisible(true);
-    } else {
+    if (!authReady) {
+      setVisible(needsOnboardingWizard() || newUserCreated === true);
+      return;
+    }
+
+    const wizardDone = readOnboardingFlag() === 'done';
+
+    if (newUserCreated === true) {
+      setVisible(!wizardDone);
+      return;
+    }
+
+    if (!needsOnboardingWizard()) {
       setVisible(false);
       return;
     }
 
-    const hasSessionToken =
-      Boolean(token) &&
-      (authMode === 'vk_token' || authMode === 'tg_token' || authMode === 'dev_token');
+    setVisible(true);
 
-    if (!backendOn || !hasSessionToken || !token) {
+    if (!backendOn || !hasApiSession(authMode, token) || !token) {
       return;
     }
 
@@ -55,7 +77,7 @@ export function OnboardingGate() {
     return () => {
       cancelled = true;
     };
-  }, [authMode, token, backendOn, storageKey, setProfile]);
+  }, [authMode, token, backendOn, storageKey, setProfile, newUserCreated, authReady]);
 
   if (!visible) return null;
   return <OnboardingWizard onFinished={() => setVisible(false)} />;

@@ -38,8 +38,10 @@ function migrateLegacyInterestsIfNeeded(): void {
   }
 }
 
-/** Перенос старого глобального флага на ключ с vk_user_id (один раз). */
+/** Перенос старого глобального флага на ключ с vk_user_id (один раз). В Telegram не переносим — иначе новый TG-юзер унаследует «done». */
 function migrateLegacyOnboardingIfNeeded(): void {
+  const suffix = userSuffix();
+  if (suffix.startsWith('_tg')) return;
   const uid = readVkUserIdFromCachedLaunchParams();
   if (!uid) return;
   try {
@@ -115,7 +117,7 @@ export function markOnboardingSkipped() {
   }
 }
 
-function readOnboardingFlag(): string | null {
+export function readOnboardingFlag(): string | null {
   try {
     migrateLegacyOnboardingIfNeeded();
     return localStorage.getItem(onboardingFlagKey());
@@ -131,12 +133,17 @@ function readOnboardingFlag(): string | null {
 export function needsOnboardingWizard(): boolean {
   if (typeof window === 'undefined') return false;
 
+  if (readOnboardingFlag() === 'done') {
+    return false;
+  }
+
   const scoped = readScopedProfile();
   if (!scoped || !isOnboardingProfileSatisfied(scoped)) {
     return true;
   }
 
-  return readOnboardingFlag() !== 'done';
+  // Профиль в localStorage полный, но мастер не завершён — всё равно показываем.
+  return true;
 }
 
 /** @deprecated используйте needsOnboardingWizard */
