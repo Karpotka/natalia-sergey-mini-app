@@ -5,15 +5,13 @@ import { readVkUserIdFromCachedLaunchParams } from '../vk/vkLaunchParams';
 
 /** Исторический ключ до привязки к vk_user_id. */
 const LEGACY_ONBOARDING_KEY = 'natalia-sergey-onboarding-v1';
-const LEGACY_PROFILE_KEY = 'natalia-sergey-user-profile';
-
 export type OnboardingInterest = 'moon' | 'astrology' | 'tarot' | 'tarot_day' | 'consultations';
 
 function userSuffix(): string {
   return readAccountStorageSuffix();
 }
 
-/** Флаг «онбординг завершён / пропущен» — отдельно для каждого пользователя на устройстве. */
+/** Флаг «онбординг завершён» — отдельно для каждого пользователя на устройстве. */
 function onboardingFlagKey(): string {
   return `${LEGACY_ONBOARDING_KEY}${userSuffix()}`;
 }
@@ -57,7 +55,8 @@ function migrateLegacyOnboardingIfNeeded(): void {
   }
 }
 
-function readScopedProfile(): UserProfile | null {
+/** Локальный профиль текущего пользователя (scoped key). */
+export function readScopedProfile(): UserProfile | null {
   try {
     const raw = localStorage.getItem(profileStorageKey());
     if (!raw) return null;
@@ -116,39 +115,31 @@ export function markOnboardingSkipped() {
   }
 }
 
+function readOnboardingFlag(): string | null {
+  try {
+    migrateLegacyOnboardingIfNeeded();
+    return localStorage.getItem(onboardingFlagKey());
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Показать онбординг, пока не заполнены имя, дата рождения и пол (локально или на сервере).
- * «Пропустить» на вводных шагах не отменяет обязательный шаг профиля.
+ * Нужен ли обязательный мастер профиля: нет имени/даты/пола в scoped-профиле.
+ * Глобальный legacy «done» без профиля этого пользователя не скрывает форму.
  */
-export function shouldShowOnboarding(): boolean {
+export function needsOnboardingWizard(): boolean {
   if (typeof window === 'undefined') return false;
-  migrateLegacyOnboardingIfNeeded();
 
   const scoped = readScopedProfile();
-  if (scoped && isOnboardingProfileSatisfied(scoped)) {
-    markOnboardingDone();
-    return false;
+  if (!scoped || !isOnboardingProfileSatisfied(scoped)) {
+    return true;
   }
 
-  // Не подтягиваем глобальный legacy-профиль в Telegram — иначе чужой VK-профиль скрывает форму.
-  const suffix = userSuffix();
-  if (!suffix.startsWith('_tg') && !scoped) {
-    try {
-      const legacyRaw = localStorage.getItem(LEGACY_PROFILE_KEY);
-      if (legacyRaw) {
-        const p = JSON.parse(legacyRaw) as Partial<UserProfile>;
-        if (isOnboardingProfileSatisfied({
-          name: typeof p.name === 'string' ? p.name : '',
-          birthDate: typeof p.birthDate === 'string' ? p.birthDate : '',
-          gender: p.gender === 'female' || p.gender === 'male' ? p.gender : '',
-        })) {
-          return false;
-        }
-      }
-    } catch {
-      /* */
-    }
-  }
+  return readOnboardingFlag() !== 'done';
+}
 
-  return true;
+/** @deprecated используйте needsOnboardingWizard */
+export function shouldShowOnboarding(): boolean {
+  return needsOnboardingWizard();
 }

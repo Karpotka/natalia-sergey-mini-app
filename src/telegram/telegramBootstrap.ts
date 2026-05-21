@@ -40,12 +40,29 @@ export function hasTelegramAuthInitData(): boolean {
   return readTelegramInitData().length > 0;
 }
 
-/** `user.id` из initDataUnsafe — для ключей профиля/онбординга на устройстве. */
+function parseTelegramUserIdFromInitDataString(initData: string): string | null {
+  if (!initData) return null;
+  try {
+    const params = new URLSearchParams(initData);
+    const rawUser = params.get('user');
+    if (!rawUser) return null;
+    const user = JSON.parse(rawUser) as { id?: number | string };
+    if (user.id == null) return null;
+    const s = String(user.id).trim();
+    return /^\d+$/.test(s) ? s : null;
+  } catch {
+    return null;
+  }
+}
+
+/** `user.id` из initData (unsafe или разбор строки initData) — для ключей профиля/онбординга. */
 export function readTelegramUserId(): string | null {
-  const id = webApp()?.initDataUnsafe?.user?.id;
-  if (id == null) return null;
-  const s = String(id).trim();
-  return /^\d+$/.test(s) ? s : null;
+  const fromUnsafe = webApp()?.initDataUnsafe?.user?.id;
+  if (fromUnsafe != null) {
+    const s = String(fromUnsafe).trim();
+    if (/^\d+$/.test(s)) return s;
+  }
+  return parseTelegramUserIdFromInitDataString(readTelegramInitData());
 }
 
 /** `start_param` из initDataUnsafe (реферал). */

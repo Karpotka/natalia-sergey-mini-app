@@ -1,31 +1,29 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { isBackendEnabled } from '../api/config';
 import { profileGet } from '../api/mysticApi';
 import { useProfile } from '../context/ProfileContext';
 import { useSession } from '../context/SessionContext';
-import { markOnboardingDone, shouldShowOnboarding } from '../lib/onboardingStorage';
+import { markOnboardingDone, needsOnboardingWizard } from '../lib/onboardingStorage';
 import {
-  isOnboardingProfileSatisfied,
   isOnboardingProfileSatisfiedOnServer,
   profileFromApi,
 } from '../lib/profileFromApi';
+import { useAccountStorageKey } from '../lib/useAccountStorageKey';
 import { OnboardingWizard } from './OnboardingWizard';
 
-/** Обязательный профиль (имя, дата, пол) при первом входе; отдельные ключи для VK и Telegram. */
+/** Обязательный профиль при первом входе; скрываем только после подтверждения на сервере или явного завершения мастера. */
 export function OnboardingGate() {
   const { authMode, token } = useSession();
-  const { profile, setProfile } = useProfile();
+  const { setProfile } = useProfile();
+  const storageKey = useAccountStorageKey();
   const backendOn = isBackendEnabled();
-  const [visible, setVisible] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [visible, setVisible] = useState(() => needsOnboardingWizard());
 
-  const evaluate = useCallback(async () => {
-    setReady(false);
-
-    if (isOnboardingProfileSatisfied(profile)) {
-      markOnboardingDone();
+  useEffect(() => {
+    if (needsOnboardingWizard()) {
+      setVisible(true);
+    } else {
       setVisible(false);
-      setReady(true);
       return;
     }
 
@@ -33,30 +31,32 @@ export function OnboardingGate() {
       Boolean(token) &&
       (authMode === 'vk_token' || authMode === 'tg_token' || authMode === 'dev_token');
 
-    if (backendOn && hasSessionToken && token) {
-      try {
-        const data = await profileGet(token);
-        const mapped = profileFromApi(data);
-        if (isOnboardingProfileSatisfiedOnServer(data)) {
-          setProfile(mapped);
-          markOnboardingDone();
-          setVisible(false);
-          setReady(true);
-          return;
-        }
-      } catch {
-        /* локальный онбординг */
-      }
+    if (!backendOn || !hasSessionToken || !token) {
+      return;
     }
 
-    setVisible(shouldShowOnboarding());
-    setReady(true);
-  }, [authMode, token, backendOn, profile, setProfile]);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await profileGet(token);
+        if (cancelled) return;
+        if (isOnboardingProfileSatisfiedOnServer(data)) {
+          setProfile(profileFromApi(data));
+          markOnboardingDone();
+          setVisible(false);
+        } else {
+          setVisible(true);
+        }
+      } catch {
+        if (!cancelled) setVisible(true);
+      }
+    })();
 
-  useEffect(() => {
-    void evaluate();
-  }, [evaluate]);
+    return () => {
+      cancelled = true;
+    };
+  }, [authMode, token, backendOn, storageKey, setProfile]);
 
-  if (!ready || !visible) return null;
+  if (!visible) return null;
   return <OnboardingWizard onFinished={() => setVisible(false)} />;
 }

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { profileStorageKey, readAccountStorageSuffix } from '../lib/accountScope';
+import { useAccountStorageKey } from '../lib/useAccountStorageKey';
 import { useSession } from './SessionContext';
 
 const LEGACY_PROFILE_KEY = 'natalia-sergey-user-profile';
@@ -109,7 +110,8 @@ type ProfileContextValue = {
 const ProfileContext = createContext<ProfileContextValue | null>(null);
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
-  const { authMode, platform } = useSession();
+  const { authMode } = useSession();
+  const storageKey = useAccountStorageKey();
   const [profile, setProfileState] = useState<UserProfile>(() =>
     typeof window !== 'undefined' ? loadStored() : { ...EMPTY },
   );
@@ -117,7 +119,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (authMode === 'idle') return;
     setProfileState(loadStored());
-  }, [authMode, platform]);
+  }, [authMode, storageKey]);
 
   const persist = useCallback((next: UserProfile) => {
     try {

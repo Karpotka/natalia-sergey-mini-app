@@ -10,7 +10,8 @@ export function readAccountStorageSuffix(): string {
   const platform = detectAppPlatform();
   if (platform === 'telegram') {
     const tid = readTelegramUserId();
-    return tid ? `_tg${tid}` : '_tg';
+    // Без id не используем общий `_tg` — иначе профили разных пользователей смешиваются.
+    return tid ? `_tg${tid}` : '_tg_pending';
   }
   const uid = readVkUserIdFromCachedLaunchParams();
   return uid ? `_u${uid}` : '';

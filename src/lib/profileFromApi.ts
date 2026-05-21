@@ -43,5 +43,7 @@ export function isOnboardingProfileSatisfied(
 export function isOnboardingProfileSatisfiedOnServer(data: ProfileApiModel): boolean {
   const mapped = profileFromApi(data);
   if (!isOnboardingProfileSatisfied(mapped)) return false;
-  return Boolean(data.birth_date && String(data.birth_date).trim());
+  const hasBirth = Boolean(data.birth_date && String(data.birth_date).trim());
+  const hasSex = data.sex === 'female' || data.sex === 'male';
+  return hasBirth && hasSex;
 }

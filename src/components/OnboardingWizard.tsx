@@ -8,7 +8,16 @@ import {
   type OnboardingInterest,
 } from '../lib/onboardingStorage';
 import { persistOnboardingProfileToServer } from '../lib/onboardingProfileSync';
+import { readTelegramUserId } from '../telegram/telegramBootstrap';
 import './onboarding.css';
+
+function readTelegramDefaultName(): string {
+  if (typeof window === 'undefined') return '';
+  const u = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  const first = typeof u?.first_name === 'string' ? u.first_name.trim() : '';
+  const last = typeof u?.last_name === 'string' ? u.last_name.trim() : '';
+  return [first, last].filter(Boolean).join(' ').trim();
+}
 
 type Props = {
   onFinished: () => void;
@@ -80,7 +89,7 @@ export function OnboardingWizard({ onFinished }: Props) {
   const [interests, setInterests] = useState<Set<OnboardingInterest>>(
     () => new Set<OnboardingInterest>(['moon', 'astrology']),
   );
-  const [name, setName] = useState(() => profile.name);
+  const [name, setName] = useState(() => profile.name.trim() || readTelegramDefaultName());
   const [birthDate, setBirthDate] = useState(() => profile.birthDate);
   const [birthTime, setBirthTime] = useState(() => profile.birthTime);
   const [gender, setGender] = useState<UserGender | ''>(() => profile.gender || '');
@@ -92,6 +101,11 @@ export function OnboardingWizard({ onFinished }: Props) {
     return () => {
       document.body.style.overflow = prev;
     };
+  }, []);
+
+  useEffect(() => {
+    if (!readTelegramUserId()) return;
+    setName((prev) => (prev.trim() ? prev : readTelegramDefaultName()));
   }, []);
 
   const goBack = useCallback(() => {
