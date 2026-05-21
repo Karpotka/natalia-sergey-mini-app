@@ -17,8 +17,8 @@
   letter-spacing: 0.03em;
 }
 
-.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.shell-cabinet-btn)::before,
-.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.shell-cabinet-btn)::after,
+.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.profile-hub-wallet-action):not(.shell-cabinet-btn)::before,
+.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.profile-hub-wallet-action):not(.shell-cabinet-btn)::after,
 .consult-cta-primary::before,
 .consult-cta-primary::after,
 .tarot-primary-btn::before,
@@ -38,7 +38,7 @@
   pointer-events: none;
 }
 
-.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.shell-cabinet-btn)::before,
+.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.profile-hub-wallet-action):not(.shell-cabinet-btn)::before,
 .consult-cta-primary::before,
 .tarot-primary-btn::before,
 .horoscope-confirm-primary::before,
@@ -46,7 +46,7 @@
   left: 18px;
 }
 
-.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.shell-cabinet-btn)::after,
+.btn-primary:not(.profile-tarot-shop-btn):not(.profile-plan-btn):not(.profile-topup-pack-btn):not(.profile-hub-wallet-action):not(.shell-cabinet-btn)::after,
 .consult-cta-primary::after,
 .tarot-primary-btn::after,
 .horoscope-confirm-primary::after,
@@ -56,7 +56,8 @@
 
 .profile-tarot-shop-btn.btn-primary,
 .profile-plan-btn.btn-primary,
-.profile-topup-pack-btn.btn-primary {
+.profile-topup-pack-btn.btn-primary,
+.profile-hub-wallet-action.btn-primary {
   min-height: 40px;
   padding: 8px 14px;
   border-radius: 999px;
