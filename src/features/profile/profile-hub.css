@@ -1,0 +1,207 @@
+/* Личный кабинет: шапка + вкладки + панели */
+
+.profile-page--hub {
+  padding-top: 8px;
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+}
+
+.profile-hub-header {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px 4px;
+}
+
+.profile-hub-title {
+  margin: 0 0 12px;
+  font-family: var(--font-display, serif);
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(247, 243, 235, 0.96);
+}
+
+.profile-hub-wallet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(201, 165, 74, 0.14) 0%, rgba(8, 8, 14, 0.72) 100%);
+  border: 1px solid rgba(212, 184, 122, 0.35);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+}
+
+.profile-hub-wallet-main {
+  min-width: 0;
+}
+
+.profile-hub-wallet-label {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(232, 226, 216, 0.5);
+}
+
+.profile-hub-wallet-value {
+  margin: 0;
+  font-family: var(--font-display, serif);
+  font-size: 1.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #fefdfb;
+  line-height: 1.1;
+}
+
+.profile-hub-wallet-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--shell-muted);
+}
+
+.profile-hub-wallet-action {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.profile-hub-sub-badge {
+  margin: 10px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(167, 243, 208, 0.95);
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.28);
+}
+
+.profile-hub-tabs {
+  display: flex;
+  gap: 8px;
+  max-width: 520px;
+  margin: 14px auto 0;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.profile-hub-tab {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 252, 245, 0.1);
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(250, 246, 239, 0.78);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.profile-hub-tab--active {
+  color: rgba(247, 243, 235, 0.98);
+  border-color: rgba(212, 184, 122, 0.45);
+  background: linear-gradient(165deg, rgba(201, 165, 74, 0.18) 0%, rgba(8, 8, 14, 0.65) 100%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.profile-hub-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  color: #1a1208;
+  background: rgba(232, 196, 120, 0.95);
+}
+
+.profile-hub-panels {
+  max-width: 520px;
+  margin: 16px auto 0;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.profile-hub-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: profile-hub-fade-in 0.22s ease;
+}
+
+@keyframes profile-hub-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-hub-panel-title {
+  margin: 0;
+  font-family: var(--font-display, serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(247, 243, 235, 0.94);
+}
+
+.profile-hub-panel-lead {
+  margin: -8px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--shell-muted);
+}
+
+.profile-form--hub {
+  margin: 0;
+  padding: 16px;
+  max-width: none;
+  border-radius: 16px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.04) 0%, rgba(8, 8, 14, 0.55) 100%);
+  border: 1px solid rgba(255, 252, 245, 0.08);
+  box-sizing: border-box;
+}
+
+.profile-hub-panel .profile-topup,
+.profile-hub-panel .profile-subscription,
+.profile-hub-panel .profile-tarot-shop {
+  margin: 0;
+  max-width: none;
+}
+
+.profile-hub-panel .profile-subscription {
+  padding: 0;
+}
+
+.profile-hub-divider {
+  height: 1px;
+  margin: 4px 0;
+  background: rgba(255, 252, 245, 0.08);
+  border: none;
+}

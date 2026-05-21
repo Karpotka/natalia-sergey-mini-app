@@ -17,6 +17,8 @@ import { clearPaymentFlowState, readPaymentFlowState } from '../lib/paymentFlowS
 import { formatPaymentOrOrderErrorForUser } from '../lib/paymentUserErrors';
 import { fetchPlaceSuggestions, type PlaceSuggestion } from '../lib/placeSearch';
 import { AstrocoinTopupSection } from '../features/profile/AstrocoinTopupSection';
+import { ProfileTabBar, type ProfileTabId } from '../features/profile/ProfileTabBar';
+import '../features/profile/profile-hub.css';
 import { TarotBackShopSection } from '../features/tarot/TarotBackShopSection';
 import {
   BALANCE_LOADING,
@@ -39,6 +41,20 @@ const SUBSCRIPTION_PLANS = [
 /** Цена подписки в астрокоинах (курс отображения: 1 ✦ = 1 ₽). */
 function formatAstrocoins(n: number) {
   return '✦ ' + new Intl.NumberFormat('ru-RU').format(n).replace(/\u00a0/g, ' ');
+}
+
+function formatAstrocoinsPlain(n: number) {
+  return new Intl.NumberFormat('ru-RU').format(n).replace(/\u00a0/g, ' ');
+}
+
+function formatSubscriptionUntil(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch {
+    return iso;
+  }
 }
 
 function subscriptionProductId(planId: (typeof SUBSCRIPTION_PLANS)[number]['id']): number | null {
@@ -145,6 +161,9 @@ export function ProfilePage() {
   const [placeLoading, setPlaceLoading] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<PlaceSuggestion | null>(null);
   const placeBlurTimer = useRef<number | null>(null);
+  const [activeTab, setActiveTab] = useState<ProfileTabId>(() =>
+    isProfileComplete(profile) ? 'wallet' : 'data',
+  );
 
   useEffect(() => {
     setLocal({ ...profile });
@@ -439,290 +458,350 @@ export function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingSubscriptionPayment, token]);
 
+  const profileIncomplete = !isProfileComplete(local);
+  const balanceDisplay =
+    token && astrocoins !== null
+      ? `✦ ${formatAstrocoinsPlain(astrocoins)}`
+      : token && authMode === 'dev_token'
+        ? '—'
+        : token
+          ? '…'
+          : '—';
+
   return (
-    <div className="product-page profile-page">
-      <section className="product-hero product-hero--profile">
-        <h1>Личный кабинет</h1>
-        <p>Профиль для персональных расчётов. Данные на устройстве.</p>
-      </section>
-
-      <section className="profile-astrocoins" aria-labelledby="profile-astrocoins-heading">
-        <h2 id="profile-astrocoins-heading" className="profile-astrocoins-title">
-          Астрокоины
-        </h2>
-        <p className="profile-astrocoins-lead">
-          Астрокоины — подписка, удачный день, Таро. Консультации — отдельно, в ₽.
-        </p>
-        {token && astrocoins !== null ? (
-          <p className="profile-astrocoins-balance" role="status" aria-label={`Астрокоинов на счёте: ${astrocoins}`}>
-            <span className="profile-astrocoins-value">✦ {astrocoins}</span>
-            <span className="profile-astrocoins-label">доступно сейчас</span>
-          </p>
-        ) : token && authMode === 'dev_token' ? (
-          <p className="profile-astrocoins-lead" style={{ marginBottom: 0 }}>
-            Баланс обновится после первой оплаты астрокоинами.
-          </p>
-        ) : token ? (
-          <p className="profile-astrocoins-lead" style={{ marginBottom: 0 }}>
-            {BALANCE_LOADING}
-          </p>
-        ) : (
-          <p className="profile-astrocoins-lead" style={{ marginBottom: 0 }}>
-            {NEED_LOGIN_BALANCE}
-          </p>
-        )}
-      </section>
-
-      {backendOn ? <AstrocoinTopupSection /> : null}
-
-      {backendOn ? <TarotBackShopSection /> : null}
-
-      <section className="profile-subscription" aria-labelledby="profile-subscription-heading">
-        <h2 id="profile-subscription-heading" className="profile-subscription-title">
-          Подписка
-        </h2>
-        <p className="profile-subscription-lead">
-          Подписка: гороскопы и материалы. Оплата <strong>астрокоинами</strong> (<strong>1 ✦ ≈ 1 ₽</strong>).
-        </p>
-        <div className="profile-plan-grid">
-          {SUBSCRIPTION_PLANS.map((plan) => (
-            <article
-              key={plan.id}
-              className={'profile-plan-card' + (plan.featured ? ' profile-plan-card--featured' : '')}
-            >
-              <div className="profile-plan-head">
-                {plan.featured && <span className="profile-plan-badge">Выгодно</span>}
-                <h3 className="profile-plan-name">{plan.title}</h3>
-              </div>
-              <p className="profile-plan-price">{formatAstrocoins(plan.price)}</p>
-              <p className="profile-plan-hint">{plan.hint}</p>
-              <button
-                type="button"
-                className="profile-plan-btn btn-primary"
-                onClick={() => onSubscribeIntent(plan.id)}
-              >
-                Оформить
-              </button>
-            </article>
-          ))}
-        </div>
-        {selectedPlanId && (
-          <div style={{ marginTop: 12 }}>
-            {astrocoins !== null && (
-              <p className="profile-plan-hint" style={{ marginBottom: 10 }}>
-                На счёте сейчас: <strong>✦ {new Intl.NumberFormat('ru-RU').format(astrocoins).replace(/\u00a0/g, ' ')}</strong>
+    <div className="product-page profile-page profile-page--hub">
+      <header className="profile-hub-header">
+        <h1 className="profile-hub-title">Личный кабинет</h1>
+        <div className="profile-hub-wallet">
+          <div className="profile-hub-wallet-main">
+            <p className="profile-hub-wallet-label">Астрокоины</p>
+            <p className="profile-hub-wallet-value" role="status" aria-label={`Баланс: ${balanceDisplay}`}>
+              {balanceDisplay}
+            </p>
+            <p className="profile-hub-wallet-hint">
+              {!token
+                ? NEED_LOGIN_BALANCE
+                : token && astrocoins === null && authMode !== 'dev_token'
+                  ? BALANCE_LOADING
+                  : 'Подписка, Таро и удачный день'}
+            </p>
+            {subscriptionEndsAt ? (
+              <p className="profile-hub-sub-badge" role="status">
+                Подписка до {formatSubscriptionUntil(subscriptionEndsAt)}
               </p>
-            )}
-            <div className="profile-actions" style={{ marginTop: 10 }}>
-              <button
-                type="button"
-                className="btn-primary"
-                disabled={subPayLoading}
-                onClick={() => void paySelectedSubscription()}
-              >
-                {subPayLoading
-                  ? 'Списываем астрокоины…'
-                  : (() => {
-                      const p = SUBSCRIPTION_PLANS.find((x) => x.id === selectedPlanId);
-                      return p ? `Оплатить ${formatAstrocoins(p.price)}` : 'Оплатить астрокоинами';
-                    })()}
-              </button>
-            </div>
-            {pendingSubscriptionPayment && (
-              <button
-                type="button"
-                className="btn-ghost"
-                style={{ marginTop: 10 }}
-                disabled={checkingPaymentStatus}
-                onClick={() => void refreshSubscriptionStatus()}
-              >
-                {checkingPaymentStatus ? 'Проверяем…' : 'Проверить статус подписки'}
-              </button>
-            )}
+            ) : null}
           </div>
-        )}
-        {subNotice && (
-          <p className="profile-subscription-notice" role="status">
-            {subNotice}
-          </p>
-        )}
-      </section>
-
-      <form className="profile-form" onSubmit={onSubmit} noValidate>
-        <label className="profile-field">
-          <span className="profile-label">Имя</span>
-          <input
-            className="profile-input"
-            type="text"
-            name="name"
-            autoComplete="name"
-            value={local.name}
-            onChange={(e) => setLocal((p) => ({ ...p, name: e.target.value }))}
-            placeholder="Как к вам обращаться"
-            required
-          />
-        </label>
-
-        <div className="profile-row">
-          <label className="profile-field">
-            <span className="profile-label">Дата рождения</span>
-            <span className="profile-input-host">
-              <input
-                className="profile-input"
-                type="date"
-                name="birthDate"
-                value={local.birthDate}
-                onChange={(e) => setLocal((p) => ({ ...p, birthDate: e.target.value }))}
-                required
-              />
-            </span>
-          </label>
-          <label className="profile-field">
-            <span className="profile-label">Время рождения</span>
-            <span className="profile-input-host">
-              <input
-                className="profile-input"
-                type="time"
-                name="birthTime"
-                value={local.birthTime}
-                disabled={Boolean(local.birthTimeUnknown)}
-                onChange={(e) => setLocal((p) => ({ ...p, birthTime: e.target.value, birthTimeUnknown: false }))}
-                required={!local.birthTimeUnknown}
-              />
-            </span>
-          </label>
+          {backendOn && token ? (
+            <button
+              type="button"
+              className="btn-primary profile-hub-wallet-action"
+              onClick={() => setActiveTab('wallet')}
+            >
+              Пополнить
+            </button>
+          ) : null}
         </div>
+      </header>
 
-        <label className="profile-field profile-field--checkbox">
-          <input
-            type="checkbox"
-            checked={Boolean(local.birthTimeUnknown)}
-            onChange={(e) => {
-              const checked = e.target.checked;
-              setLocal((p) => ({
-                ...p,
-                birthTimeUnknown: checked,
-                birthTime: checked ? '' : p.birthTime,
-              }));
-            }}
-          />
-          <span>Не знаю точного времени рождения</span>
-        </label>
+      <ProfileTabBar
+        active={activeTab}
+        onChange={setActiveTab}
+        profileIncomplete={profileIncomplete}
+      />
 
-        <label className="profile-field profile-field--place">
-          <span className="profile-label">Место рождения</span>
-          <input
-            className="profile-input"
-            type="text"
-            name="birthPlace"
-            autoComplete="off"
-            aria-autocomplete="list"
-            aria-expanded={placeOpen && placeSuggestions.length > 0}
-            aria-controls="profile-birth-place-list"
-            value={local.birthPlace}
-            onChange={(e) => {
-              setPlaceOpen(true);
-              setSelectedPlace(null);
-              setLocal((p) => ({ ...p, birthPlace: e.target.value }));
-            }}
-            onFocus={() => {
-              if (placeBlurTimer.current != null) {
-                window.clearTimeout(placeBlurTimer.current);
-                placeBlurTimer.current = null;
-              }
-              setPlaceOpen(true);
-            }}
-            onBlur={() => {
-              placeBlurTimer.current = window.setTimeout(() => setPlaceOpen(false), 180);
-            }}
-            placeholder="Город"
-            required
-          />
-          {placeOpen && local.birthPlace.trim().length >= 2 && (
-            <ul id="profile-birth-place-list" className="profile-place-suggestions" role="listbox">
-              {placeLoading && (
-                <li>
-                  <span className="profile-place-item profile-place-item--muted">Поиск…</span>
-                </li>
+      <div className="profile-hub-panels">
+        {activeTab === 'data' && (
+          <section
+            id="profile-panel-data"
+            role="tabpanel"
+            aria-labelledby="profile-tab-data"
+            className="profile-hub-panel"
+          >
+            <h2 className="profile-hub-panel-title">Ваши данные</h2>
+            <p className="profile-hub-panel-lead">
+              Имя, дата и место рождения — для гороскопа, луны и персональных подсказок.
+            </p>
+            <form className="profile-form profile-form--hub" onSubmit={onSubmit} noValidate>
+              <label className="profile-field">
+                <span className="profile-label">Имя</span>
+                <input
+                  className="profile-input"
+                  type="text"
+                  name="name"
+                  autoComplete="name"
+                  value={local.name}
+                  onChange={(e) => setLocal((p) => ({ ...p, name: e.target.value }))}
+                  placeholder="Как к вам обращаться"
+                  required
+                />
+              </label>
+
+              <div className="profile-row">
+                <label className="profile-field">
+                  <span className="profile-label">Дата рождения</span>
+                  <span className="profile-input-host">
+                    <input
+                      className="profile-input"
+                      type="date"
+                      name="birthDate"
+                      value={local.birthDate}
+                      onChange={(e) => setLocal((p) => ({ ...p, birthDate: e.target.value }))}
+                      required
+                    />
+                  </span>
+                </label>
+                <label className="profile-field">
+                  <span className="profile-label">Время рождения</span>
+                  <span className="profile-input-host">
+                    <input
+                      className="profile-input"
+                      type="time"
+                      name="birthTime"
+                      value={local.birthTime}
+                      disabled={Boolean(local.birthTimeUnknown)}
+                      onChange={(e) =>
+                        setLocal((p) => ({ ...p, birthTime: e.target.value, birthTimeUnknown: false }))
+                      }
+                      required={!local.birthTimeUnknown}
+                    />
+                  </span>
+                </label>
+              </div>
+
+              <label className="profile-field profile-field--checkbox">
+                <input
+                  type="checkbox"
+                  checked={Boolean(local.birthTimeUnknown)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setLocal((p) => ({
+                      ...p,
+                      birthTimeUnknown: checked,
+                      birthTime: checked ? '' : p.birthTime,
+                    }));
+                  }}
+                />
+                <span>Не знаю точного времени рождения</span>
+              </label>
+
+              <label className="profile-field profile-field--place">
+                <span className="profile-label">Место рождения</span>
+                <input
+                  className="profile-input"
+                  type="text"
+                  name="birthPlace"
+                  autoComplete="off"
+                  aria-autocomplete="list"
+                  aria-expanded={placeOpen && placeSuggestions.length > 0}
+                  aria-controls="profile-birth-place-list"
+                  value={local.birthPlace}
+                  onChange={(e) => {
+                    setPlaceOpen(true);
+                    setSelectedPlace(null);
+                    setLocal((p) => ({ ...p, birthPlace: e.target.value }));
+                  }}
+                  onFocus={() => {
+                    if (placeBlurTimer.current != null) {
+                      window.clearTimeout(placeBlurTimer.current);
+                      placeBlurTimer.current = null;
+                    }
+                    setPlaceOpen(true);
+                  }}
+                  onBlur={() => {
+                    placeBlurTimer.current = window.setTimeout(() => setPlaceOpen(false), 180);
+                  }}
+                  placeholder="Город"
+                  required
+                />
+                {placeOpen && local.birthPlace.trim().length >= 2 && (
+                  <ul id="profile-birth-place-list" className="profile-place-suggestions" role="listbox">
+                    {placeLoading && (
+                      <li>
+                        <span className="profile-place-item profile-place-item--muted">Поиск…</span>
+                      </li>
+                    )}
+                    {!placeLoading &&
+                      placeSuggestions.map((s) => (
+                        <li key={`${s.lat},${s.lon},${s.value}`} role="presentation">
+                          <button
+                            type="button"
+                            role="option"
+                            className="profile-place-item"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setLocal((p) => ({ ...p, birthPlace: s.value }));
+                              setSelectedPlace(s);
+                              setPlaceSuggestions([]);
+                              setPlaceOpen(false);
+                            }}
+                          >
+                            {s.label}
+                          </button>
+                        </li>
+                      ))}
+                    {!placeLoading && placeSuggestions.length === 0 && (
+                      <li>
+                        <span className="profile-place-item profile-place-item--empty">
+                          Ничего не найдено — уточните название
+                        </span>
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </label>
+
+              <fieldset className="profile-field profile-field--radio">
+                <legend className="profile-label">Пол</legend>
+                <div className="profile-gender-row" role="group" aria-label="Пол">
+                  {GENDER_OPTIONS.map((o, i) => (
+                    <label key={o.value} className="profile-gender-option">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value={o.value}
+                        required={i === 0}
+                        checked={local.gender === o.value}
+                        onChange={() => setLocal((p) => ({ ...p, gender: o.value }))}
+                      />
+                      <span>{o.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <div className="profile-actions">
+                <button type="submit" className="btn-primary" disabled={!dirty || saving}>
+                  {saving ? 'Сохраняем…' : savedFlash ? 'Сохранено' : 'Сохранить'}
+                </button>
+                {dirty && (
+                  <button type="button" className="btn-ghost" onClick={applyFromStorage}>
+                    Отменить
+                  </button>
+                )}
+              </div>
+
+              {saveError && (
+                <p className="profile-status" role="alert">
+                  <strong>Ошибка сохранения:</strong> {saveError}
+                </p>
               )}
-              {!placeLoading &&
-                placeSuggestions.map((s) => (
-                  <li key={`${s.lat},${s.lon},${s.value}`} role="presentation">
+
+              <p className="profile-status" role="status">
+                {isProfileComplete(local) ? (
+                  <>
+                    <strong>Профиль заполнен.</strong> Раздел «Астрология» доступен.
+                  </>
+                ) : (
+                  <>Укажите имя, дату, место, пол и время (или «не знаю») — для астрологии.</>
+                )}
+              </p>
+            </form>
+          </section>
+        )}
+
+        {activeTab === 'wallet' && (
+          <section
+            id="profile-panel-wallet"
+            role="tabpanel"
+            aria-labelledby="profile-tab-wallet"
+            className="profile-hub-panel"
+          >
+            <h2 className="profile-hub-panel-title">Кошелёк</h2>
+            <p className="profile-hub-panel-lead">
+              Пополнение счёта и подписка. Консультации оплачиваются отдельно, в рублях.
+            </p>
+            {backendOn ? <AstrocoinTopupSection /> : null}
+            <hr className="profile-hub-divider" aria-hidden />
+            <section className="profile-subscription" aria-labelledby="profile-subscription-heading">
+              <h2 id="profile-subscription-heading" className="profile-subscription-title">
+                Подписка
+              </h2>
+              <p className="profile-subscription-lead">
+                Подписка: гороскопы и материалы. Оплата <strong>астрокоинами</strong> (
+                <strong>1 ✦ ≈ 1 ₽</strong>).
+              </p>
+              <div className="profile-plan-grid">
+                {SUBSCRIPTION_PLANS.map((plan) => (
+                  <article
+                    key={plan.id}
+                    className={'profile-plan-card' + (plan.featured ? ' profile-plan-card--featured' : '')}
+                  >
+                    <div className="profile-plan-head">
+                      {plan.featured && <span className="profile-plan-badge">Выгодно</span>}
+                      <h3 className="profile-plan-name">{plan.title}</h3>
+                    </div>
+                    <p className="profile-plan-price">{formatAstrocoins(plan.price)}</p>
+                    <p className="profile-plan-hint">{plan.hint}</p>
                     <button
                       type="button"
-                      role="option"
-                      className="profile-place-item"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        setLocal((p) => ({ ...p, birthPlace: s.value }));
-                        setSelectedPlace(s);
-                        setPlaceSuggestions([]);
-                        setPlaceOpen(false);
-                      }}
+                      className="profile-plan-btn btn-primary"
+                      onClick={() => onSubscribeIntent(plan.id)}
                     >
-                      {s.label}
+                      Оформить
                     </button>
-                  </li>
+                  </article>
                 ))}
-              {!placeLoading && placeSuggestions.length === 0 && (
-                <li>
-                  <span className="profile-place-item profile-place-item--empty">
-                    Ничего не найдено — уточните название
-                  </span>
-                </li>
+              </div>
+              {selectedPlanId && (
+                <div style={{ marginTop: 12 }}>
+                  {astrocoins !== null && (
+                    <p className="profile-plan-hint" style={{ marginBottom: 10 }}>
+                      На счёте сейчас:{' '}
+                      <strong>✦ {formatAstrocoinsPlain(astrocoins)}</strong>
+                    </p>
+                  )}
+                  <div className="profile-actions" style={{ marginTop: 10 }}>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      disabled={subPayLoading}
+                      onClick={() => void paySelectedSubscription()}
+                    >
+                      {subPayLoading
+                        ? 'Списываем астрокоины…'
+                        : (() => {
+                            const p = SUBSCRIPTION_PLANS.find((x) => x.id === selectedPlanId);
+                            return p ? `Оплатить ${formatAstrocoins(p.price)}` : 'Оплатить астрокоинами';
+                          })()}
+                    </button>
+                  </div>
+                  {pendingSubscriptionPayment && (
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      style={{ marginTop: 10 }}
+                      disabled={checkingPaymentStatus}
+                      onClick={() => void refreshSubscriptionStatus()}
+                    >
+                      {checkingPaymentStatus ? 'Проверяем…' : 'Проверить статус подписки'}
+                    </button>
+                  )}
+                </div>
               )}
-            </ul>
-          )}
-        </label>
-
-        <fieldset className="profile-field profile-field--radio">
-          <legend className="profile-label">Пол</legend>
-          <div className="profile-gender-row" role="group" aria-label="Пол">
-            {GENDER_OPTIONS.map((o, i) => (
-              <label key={o.value} className="profile-gender-option">
-                <input
-                  type="radio"
-                  name="gender"
-                  value={o.value}
-                  required={i === 0}
-                  checked={local.gender === o.value}
-                  onChange={() => setLocal((p) => ({ ...p, gender: o.value }))}
-                />
-                <span>{o.label}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <div className="profile-actions">
-          <button type="submit" className="btn-primary" disabled={!dirty || saving}>
-            {saving ? 'Сохраняем…' : savedFlash ? 'Сохранено' : 'Сохранить'}
-          </button>
-          {dirty && (
-            <button type="button" className="btn-ghost" onClick={applyFromStorage}>
-              Отменить
-            </button>
-          )}
-        </div>
-
-        {saveError && (
-          <p className="profile-status" role="alert">
-            <strong>Ошибка сохранения:</strong> {saveError}
-          </p>
+              {subNotice && (
+                <p className="profile-subscription-notice" role="status">
+                  {subNotice}
+                </p>
+              )}
+            </section>
+          </section>
         )}
 
-        <p className="profile-status" role="status">
-          {isProfileComplete(local) ? (
-            <>
-              <strong>Профиль заполнен.</strong> Раздел «Астрология» доступен.
-            </>
-          ) : (
-            <>
-              Укажите имя, дату, место, пол и время (или «не знаю») — для астрологии.
-            </>
-          )}
-        </p>
-      </form>
+        {activeTab === 'shop' && (
+          <section
+            id="profile-panel-shop"
+            role="tabpanel"
+            aria-labelledby="profile-tab-shop"
+            className="profile-hub-panel"
+          >
+            <h2 className="profile-hub-panel-title">Обложки Таро</h2>
+            <p className="profile-hub-panel-lead">
+              Рубашка для раскладов и карты дня. Покупка — за астрокоины из кошелька.
+            </p>
+            {backendOn ? <TarotBackShopSection showBalance={false} embedded /> : null}
+          </section>
+        )}
+      </div>
     </div>
   );
 }

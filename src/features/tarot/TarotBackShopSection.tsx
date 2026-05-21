@@ -22,7 +22,14 @@ function shopBuyMessage(
   }
 }
 
-export function TarotBackShopSection() {
+type Props = {
+  /** В кабинете баланс уже в шапке — не дублируем. */
+  showBalance?: boolean;
+  /** Внутри вкладки кабинета — без повторного заголовка. */
+  embedded?: boolean;
+};
+
+export function TarotBackShopSection({ showBalance = true, embedded = false }: Props) {
   const { token, astrocoins } = useSession();
   const {
     shopItems,
@@ -84,19 +91,26 @@ export function TarotBackShopSection() {
   }
 
   return (
-    <section className="profile-tarot-shop" aria-labelledby="profile-tarot-shop-heading">
-      <h2 id="profile-tarot-shop-heading" className="profile-tarot-shop-title">
-        Обложки Таро
-      </h2>
-      <p className="profile-tarot-shop-lead">
-        Рубашка для раскладов и карты дня. Купить и «Надеть».
-      </p>
+    <section
+      className="profile-tarot-shop"
+      aria-labelledby={embedded ? undefined : 'profile-tarot-shop-heading'}
+    >
+      {!embedded ? (
+        <>
+          <h2 id="profile-tarot-shop-heading" className="profile-tarot-shop-title">
+            Обложки Таро
+          </h2>
+          <p className="profile-tarot-shop-lead">
+            Рубашка для раскладов и карты дня. Купить и «Надеть».
+          </p>
+        </>
+      ) : null}
       {!token ? (
         <p className="profile-tarot-shop-lead" style={{ marginTop: 0 }}>
           {NEED_LOGIN_TAROT_SHOP}
         </p>
       ) : null}
-      {astrocoins !== null && (
+      {showBalance && astrocoins !== null && (
         <p className="profile-tarot-shop-balance" role="status">
           Сейчас на счёте: <span className="profile-tarot-shop-balance-value">✦ {astrocoins}</span>
         </p>
