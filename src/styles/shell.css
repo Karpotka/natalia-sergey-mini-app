@@ -477,6 +477,7 @@
   padding: 16px 16px 24px;
   max-width: 520px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .product-hero {
@@ -522,6 +523,10 @@
 .product-hero--consult {
   --hero-accent: #d4af37;
   --hero-accent-2: #e8c547;
+}
+
+.product-hero.product-hero--consult.consult-landing {
+  overflow: visible;
 }
 
 .product-hero--learn {

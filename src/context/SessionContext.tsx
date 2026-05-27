@@ -207,7 +207,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (!hasVkAuthLaunchParams(launch)) {
         setEquippedTarotBackgroundId(null);
         setAuthMode('auth_failed');
-        setAuthMessage(null);
+        setAuthMessage(
+          'Не удалось получить параметры запуска из VK. Откройте приложение через vk.com/app54570453 (не прямую ссылку на vk-apps.com в браузере).',
+        );
         setAuthReady(true);
         return;
       }

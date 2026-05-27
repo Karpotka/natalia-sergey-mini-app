@@ -13,7 +13,7 @@ export const NEED_LOGIN_SUBSCRIPTION = 'Войдите в приложение, 
 export const NEED_LOGIN_TAROT_SHOP =
   'Войдите в приложение, чтобы покупать обложки за астрокоины. Бесплатную можно надеть сразу.';
 
-export const NEED_LOGIN_CONSULT = 'Войдите в приложение, чтобы оставить заявку и оплатить.';
+export const NEED_LOGIN_CONSULT = 'Войдите в приложение, чтобы оставить заявку.';
 
 export const BACKEND_UNAVAILABLE =
   'Сервер недоступен. Откройте мини-приложение из меню бота или соцсети.';

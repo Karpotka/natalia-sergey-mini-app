@@ -15,6 +15,10 @@ interface ImportMetaEnv {
   readonly VITE_CRYSTAL_PACK_ID_5000?: string;
   /** Если бэкенд отдаёт каталог по другому пути (по умолчанию `/service/catalog`). */
   readonly VITE_SERVICE_CATALOG_PATH?: string;
+  /** Путь заявки на консультацию без оплаты (по умолчанию `/service/orders/request`). */
+  readonly VITE_SERVICE_CONSULT_REQUEST_PATH?: string;
+  /** Email для fallback-создания заказа YooKassa (не показывается в форме). */
+  readonly VITE_CONSULT_REQUEST_RECEIPT_EMAIL?: string;
   readonly VITE_CONSULT_PRODUCT_ID_ASTROLOGER?: string;
   readonly VITE_CONSULT_PRODUCT_ID_TAROLOGIST?: string;
   readonly VITE_CONSULT_PRODUCT_ID_UNIVERSAL?: string;

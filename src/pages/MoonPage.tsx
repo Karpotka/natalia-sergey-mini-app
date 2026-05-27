@@ -18,12 +18,12 @@ import quickDayCardImg from '../assets/home-quick/quick-day-card.png';
 import quickHoroscopeImg from '../assets/home-quick/quick-horoscope.png';
 import quickSpreadImg from '../assets/home-quick/quick-spread.png';
 import { MoonCalculationsPanels, MOON_SLIDE_COUNT } from '../features/moon/MoonCalculationsPanels';
-import { moonAssetUrl } from '../features/moon/moonPhases';
+import { grayMoonUrl, MOON_GRAY_PROBE_FILE } from '../features/moon/moonPhases';
 import { MoonPhaseView } from '../features/moon/MoonPhaseView';
 import { useMoonTimeDrag } from '../features/moon/useMoonTimeDrag';
 import '../features/moon/moonSurface.css';
 
-const MOON_FALLBACK = moonAssetUrl('moon', '8k_moon.jpg');
+const MOON_FALLBACK = grayMoonUrl(MOON_GRAY_PROBE_FILE);
 
 /** Короткие «настроения» по тропическому знаку Луны — для строки тегов на главной. */
 const MOON_SIGN_TAGS: readonly string[] = [

@@ -1,4 +1,34 @@
 const STORAGE_KEY = 'ns_tg_init_data';
+const TELEGRAM_SDK_URL = 'https://telegram.org/js/telegram-web-app.js';
+
+let telegramSdkPromise: Promise<void> | null = null;
+
+/** Подгружаем SDK только в Telegram — во VK скрипт telegram.org падает и мешает запуску. */
+export function loadTelegramSdk(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (window.Telegram?.WebApp) return Promise.resolve();
+  if (telegramSdkPromise) return telegramSdkPromise;
+
+  telegramSdkPromise = new Promise((resolve) => {
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${TELEGRAM_SDK_URL}"]`);
+    if (existing) {
+      existing.addEventListener('load', () => resolve(), { once: true });
+      existing.addEventListener('error', () => resolve(), { once: true });
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = TELEGRAM_SDK_URL;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      console.warn('[Telegram] не удалось загрузить SDK');
+      resolve();
+    };
+    document.head.appendChild(script);
+  });
+
+  return telegramSdkPromise;
+}
 
 function webApp(): NonNullable<NonNullable<Window['Telegram']>['WebApp']> | null {
   if (typeof window === 'undefined') return null;

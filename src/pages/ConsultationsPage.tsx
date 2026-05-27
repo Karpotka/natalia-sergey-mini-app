@@ -4,22 +4,26 @@ import { useSearchParams } from 'react-router-dom';
 import { isBackendEnabled } from '../api/config';
 import {
   serviceCatalog,
-  serviceConsultYookassaInvoice,
+  submitConsultApplication,
   type ServiceCatalogItem,
 } from '../api/mysticApi';
 import { useProfile, type UserGender, type UserProfile } from '../context/ProfileContext';
 import { useSession } from '../context/SessionContext';
-import { invoiceUrlFromPaymentResponse, openPaymentInvoiceUrl } from '../lib/paymentGateway';
-import { formatConsultApiErrorForUser, formatPaymentUserFacingMessage } from '../lib/paymentUserErrors';
+import { formatConsultApiErrorForUser } from '../lib/paymentUserErrors';
+import { NEED_LOGIN_CONSULT } from '../lib/userFacingCopy';
+import consultNatalyaPhoto from '../assets/consult-natalya-vesper-sm.jpg';
+import consultNatalyaPhoto2x from '../assets/consult-natalya-vesper-md.jpg';
 
 const GENDER_OPTIONS: { value: UserGender; label: string }[] = [
   { value: 'female', label: 'Женский' },
   { value: 'male', label: 'Мужской' },
 ];
 
+const CONSULT_SUCCESS_MESSAGE =
+  'Наталья получила вашу заявку и в скором времени с вами свяжется.';
+
 /** Один эксперт в продукте — имя для UI и заявок. */
 const EXPERT_NAME = 'Наталья Веспер';
-const EXPERT_MONOGRAM = 'НВ';
 
 type ConsultDraft = {
   name: string;
@@ -129,14 +133,6 @@ function buildConsultInputData(draft: ConsultDraft, item: ServiceCatalogItem): R
   return wide;
 }
 
-function formatRub(amount: number): string {
-  try {
-    return `${new Intl.NumberFormat('ru-RU').format(amount)} ₽`;
-  } catch {
-    return `${amount} ₽`;
-  }
-}
-
 function profileToDraft(p: UserProfile): ConsultDraft {
   return {
     name: p.name,
@@ -149,7 +145,7 @@ function profileToDraft(p: UserProfile): ConsultDraft {
 }
 
 export function ConsultationsPage() {
-  const { token } = useSession();
+  const { token, platform } = useSession();
   const { profile } = useProfile();
   const [, setSearchParams] = useSearchParams();
   const apiOn = isBackendEnabled();
@@ -158,8 +154,7 @@ export function ConsultationsPage() {
   const [draft, setDraft] = useState<ConsultDraft>(() => profileToDraft(profile));
   const [formError, setFormError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [payEmail, setPayEmail] = useState('');
-  const [payLoading, setPayLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const [catalog, setCatalog] = useState<ServiceCatalogItem[]>([]);
@@ -207,8 +202,7 @@ export function ConsultationsPage() {
 
   const openConsultForm = useCallback(() => {
     setSubmitted(false);
-    setPayEmail('');
-    setPayLoading(false);
+    setSubmitLoading(false);
     setFormError(null);
     setDraft(profileToDraft(profile));
     setConsultOpen(true);
@@ -218,7 +212,7 @@ export function ConsultationsPage() {
     setConsultOpen(false);
     setFormError(null);
     setSubmitted(false);
-    setPayLoading(false);
+    setSubmitLoading(false);
   }, []);
 
   useEffect(() => {
@@ -247,10 +241,10 @@ export function ConsultationsPage() {
 
   const selectedService = useMemo(() => resolveConsultService(catalog), [catalog]);
 
-  const proceedToPayment = async (e?: FormEvent) => {
+  const submitConsultRequest = async (e?: FormEvent) => {
     e?.preventDefault();
     if (!token) {
-      setFormError('Войдите в приложение, чтобы оплатить консультацию.');
+      setFormError(NEED_LOGIN_CONSULT);
       return;
     }
     if (catalogLoading) {
@@ -275,41 +269,22 @@ export function ConsultationsPage() {
       return;
     }
 
-    const email = payEmail.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setFormError('Нужен email для чека и связи.');
-      return;
-    }
-
-    setPayLoading(true);
+    setSubmitLoading(true);
     setFormError(null);
     try {
       const input_data = buildConsultInputData(draft, selectedService);
-      const serviceId = selectedService.id;
-      const raw = await serviceConsultYookassaInvoice(
-        {
-          service_id: serviceId,
-          email: payEmail.trim(),
-          pay_method: 'card',
-          input_data,
-        },
-        token,
-      );
-      const url = invoiceUrlFromPaymentResponse(raw);
-      if (!url) {
-        setFormError('Не удалось получить ссылку на оплату. Попробуйте ещё раз чуть позже.');
-        return;
-      }
-      const openRes = await openPaymentInvoiceUrl(url);
-      if ('error' in openRes) {
-        setFormError(formatPaymentUserFacingMessage(openRes.error));
-        return;
+      if (apiOn) {
+        await submitConsultApplication(
+          { service_id: selectedService.id, input_data },
+          token,
+          platform ?? 'browser',
+        );
       }
       setSubmitted(true);
     } catch (err) {
       setFormError(formatConsultApiErrorForUser(err));
     } finally {
-      setPayLoading(false);
+      setSubmitLoading(false);
     }
   };
 
@@ -341,7 +316,7 @@ export function ConsultationsPage() {
 
           {submitted ? (
             <div className="consult-form-success">
-              <p>Оплата открыта в новом окне. Вопросы — в поддержку.</p>
+              <p>{CONSULT_SUCCESS_MESSAGE}</p>
               <button type="button" className="btn-primary" onClick={closeForm}>
                 Закрыть
               </button>
@@ -361,14 +336,6 @@ export function ConsultationsPage() {
               {token && !catalogLoading && selectedService ? (
                 <p className="consult-form-lead" style={{ marginTop: 8 }}>
                   Услуга: <strong>{selectedService.title}</strong>
-                  {typeof selectedService.price_money === 'number' && selectedService.price_money > 0 ? (
-                    <>
-                      {' '}
-                      · ориентир <strong>{formatRub(selectedService.price_money)}</strong>
-                    </>
-                  ) : (
-                    <> · сумма появится на шаге оплаты</>
-                  )}
                 </p>
               ) : null}
               {token && !catalogLoading && catalog.length > 0 && !selectedService ? (
@@ -377,7 +344,7 @@ export function ConsultationsPage() {
                 </p>
               ) : null}
 
-              <form className="consult-form" onSubmit={(ev) => void proceedToPayment(ev)} noValidate>
+              <form className="consult-form" onSubmit={(ev) => void submitConsultRequest(ev)} noValidate>
                 <label className="profile-field">
                   <span className="profile-label">Имя</span>
                   <input
@@ -462,18 +429,6 @@ export function ConsultationsPage() {
                   />
                 </label>
 
-                <label className="profile-field">
-                  <span className="profile-label">Email для чека ЮKassa</span>
-                  <input
-                    className="profile-input"
-                    type="email"
-                    value={payEmail}
-                    onChange={(e) => setPayEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                  />
-                </label>
-
                 {formError && (
                   <p className="consult-form-error" role="alert">
                     {formError}
@@ -484,9 +439,9 @@ export function ConsultationsPage() {
                   <button
                     type="submit"
                     className="consult-cta-primary"
-                    disabled={payLoading || (Boolean(token) && catalogLoading) || (Boolean(token) && !selectedService)}
+                    disabled={submitLoading || (Boolean(token) && catalogLoading) || (Boolean(token) && !selectedService)}
                   >
-                    {payLoading ? 'Открываем оплату…' : 'Оплатить картой'}
+                    {submitLoading ? 'Отправляем заявку…' : 'Отправить заявку'}
                   </button>
                 </div>
               </form>
@@ -498,7 +453,7 @@ export function ConsultationsPage() {
     );
 
   return (
-    <div className="product-page">
+    <div className="product-page product-page--consult">
       <section className="product-hero product-hero--consult consult-landing">
         <div className="consult-landing-inner">
           <p className="consult-kicker">Персональная сессия</p>
@@ -508,22 +463,24 @@ export function ConsultationsPage() {
             кабинета, запрос — в форме.
           </p>
 
-          <div className="consult-price-note" role="note">
-            <span className="consult-price-note-icon" aria-hidden>
-              ✦
-            </span>
-            <span className="consult-price-note-text">
-              <strong>Цена по услуге</strong> — сумма перед оплатой.
-            </span>
-          </div>
-
           {apiOn && token && catalogError ? <p className="consult-form-error">{catalogError}</p> : null}
           {apiOn && token && catalogLoading ? <p className="consult-catalog-hint">Загружаем каталог услуг…</p> : null}
 
           <article className="consult-expert-solo">
-            <div className="consult-expert-solo-visual" aria-hidden>
-              <div className="consult-expert-solo-orbit" />
-              <div className="consult-expert-solo-badge">{EXPERT_MONOGRAM}</div>
+            <div className="consult-expert-solo-visual">
+              <div className="consult-expert-solo-orbit" aria-hidden />
+              <img
+                src={consultNatalyaPhoto}
+                srcSet={`${consultNatalyaPhoto} 240w, ${consultNatalyaPhoto2x} 480w`}
+                sizes="112px"
+                alt={EXPERT_NAME}
+                className="consult-expert-solo-photo"
+                width={112}
+                height={140}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+              />
             </div>
             <div className="consult-expert-solo-body">
               <h2 className="consult-expert-solo-name">{EXPERT_NAME}</h2>
@@ -540,9 +497,9 @@ export function ConsultationsPage() {
           {apiOn && (
             <p className="consult-footnote">
               {!token ? (
-                <>Войдите в приложение, чтобы оставить заявку и оплатить.</>
+                <>{NEED_LOGIN_CONSULT}</>
               ) : (
-                <>После формы — оплата картой. Чек на email.</>
+                <>Заполните форму — Наталья свяжется с вами в ближайшее время.</>
               )}
             </p>
           )}

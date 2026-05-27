@@ -3,13 +3,13 @@
  * 0, 0w, затем для n = 1…120: нечётный n — один кадр, чётный — gray_mb{n} и gray_mb{n}w.
  */
 export const MOON_GRAY_FRAME_FILES: readonly string[] = (() => {
-  const out: string[] = ['gray_mb0_Normal.png', 'gray_mb0w_Normal.png'];
+  const out: string[] = ['gray_mb0_normal.png', 'gray_mb0w_normal.png'];
   for (let n = 1; n <= 120; n++) {
     if (n % 2 === 1) {
-      out.push(`gray_mb${n}_Normal.png`);
+      out.push(`gray_mb${n}_normal.png`);
     } else {
-      out.push(`gray_mb${n}_Normal.png`);
-      out.push(`gray_mb${n}w_Normal.png`);
+      out.push(`gray_mb${n}_normal.png`);
+      out.push(`gray_mb${n}w_normal.png`);
     }
   }
   return out;
@@ -35,7 +35,7 @@ export function moonGrayBlend(moonPhaseDeg: number): GrayMoonBlend {
   const n = MOON_GRAY_FRAME_COUNT;
   const d = (((moonPhaseDeg + PHASE_DEG_OFFSET) % 360) + 360) % 360;
   if (n < 2) {
-    const only = MOON_GRAY_FRAME_FILES[0] ?? 'gray_mb0_Normal.png';
+    const only = MOON_GRAY_FRAME_FILES[0] ?? 'gray_mb0_normal.png';
     return { nameA: only, nameB: only, t: 0 };
   }
   const pos = (d / 360) * (n - 1);
@@ -61,4 +61,4 @@ export function grayMoonUrl(filename: string): string {
 }
 
 /** Первый кадр для проверки наличия набора */
-export const MOON_GRAY_PROBE_FILE = 'gray_mb0_Normal.png';
+export const MOON_GRAY_PROBE_FILE = 'gray_mb0_normal.png';

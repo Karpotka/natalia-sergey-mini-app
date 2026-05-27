@@ -13,7 +13,7 @@
  * - Магазин / кристаллы (в UI — **астрокоины**, те же поля `score_crystal`, `crystal`) / подписка / платежи — см. функции внизу файла.
  * - Обложки Таро: `POST /shop` с типом (`tarot_back`, `tarot_skin`, `background`), `POST /shop/buy`, `POST /equipObject`; в init — `equip.background`.
  */
-import { apiGetJson, apiPatchJson, apiPostJson } from './client';
+import { ApiError, apiGetJson, apiPatchJson, apiPostJson } from './client';
 
 /** Экипировка из init (OpenAPI: equip.background). */
 export type EquipState = { background: number };
@@ -514,6 +514,30 @@ export async function serviceOrderYookassaInvoice(body: ServiceOrderYookassaBody
   return apiPostJson<ServiceOrderYookassaResponse>('/service/orders/yookassa/invoice', body, token);
 }
 
+export type ServiceOrderStarsBody = {
+  service_id: number;
+  input_data?: Record<string, unknown>;
+};
+
+export async function serviceOrderStarsInvoice(body: ServiceOrderStarsBody, token: string) {
+  return apiPostJson<ServiceOrderYookassaResponse>('/service/orders/stars/invoice', body, token);
+}
+
+const SERVICE_CONSULT_REQUEST_PATH = trimServicePath(
+  import.meta.env.VITE_SERVICE_CONSULT_REQUEST_PATH,
+  '/service/orders/request',
+);
+
+export type ServiceConsultRequestBody = {
+  service_id: number;
+  input_data?: Record<string, unknown>;
+};
+
+/** Заявка без оплаты (когда бэкенд поддерживает отдельный путь). */
+export async function serviceConsultSubmitRequest(body: ServiceConsultRequestBody, token: string) {
+  return apiPostJson<{ order_id?: number; ok?: boolean }>(SERVICE_CONSULT_REQUEST_PATH, body, token);
+}
+
 export async function serviceOrderInputPatch(orderId: number, input_data: Record<string, unknown>, token: string) {
   return apiPatchJson<unknown>(`/service/orders/${orderId}/input`, { input_data }, token);
 }
@@ -551,4 +575,45 @@ export type ConsultYookassaPayMethod = 'card' | 'yoomoney';
  */
 export async function serviceConsultYookassaInvoice(body: ServiceOrderYookassaBody, token: string) {
   return serviceOrderYookassaInvoice(body, token);
+}
+
+function consultRequestReceiptEmail(): string {
+  const fromEnv = String(import.meta.env.VITE_CONSULT_REQUEST_RECEIPT_EMAIL ?? '').trim();
+  return fromEnv || 'consult-application@noreply.local';
+}
+
+/**
+ * Отправляет заявку на консультацию без открытия оплаты.
+ * Сначала пробует `VITE_SERVICE_CONSULT_REQUEST_PATH`, иначе создаёт заказ в статусе pending (Stars / YooKassa).
+ */
+export async function submitConsultApplication(
+  body: ServiceConsultRequestBody,
+  token: string,
+  platform: 'telegram' | 'vk' | 'browser',
+): Promise<void> {
+  const input_data = { ...body.input_data, application_only: true };
+
+  try {
+    await serviceConsultSubmitRequest({ service_id: body.service_id, input_data }, token);
+    return;
+  } catch (e) {
+    const missing =
+      e instanceof ApiError && (e.status === 404 || e.status === 405 || e.code === 'not_found');
+    if (!missing) throw e;
+  }
+
+  if (platform === 'telegram') {
+    await serviceOrderStarsInvoice({ service_id: body.service_id, input_data }, token);
+    return;
+  }
+
+  await serviceOrderYookassaInvoice(
+    {
+      service_id: body.service_id,
+      pay_method: 'card',
+      email: consultRequestReceiptEmail(),
+      input_data,
+    },
+    token,
+  );
 }

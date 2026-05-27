@@ -1,5 +1,6 @@
 import vkBridge from '@vkontakte/vk-bridge';
 import { isTelegramMiniAppEnvironment } from '../telegram/telegramBootstrap';
+import { ensureVkWebAppInit, isVkClientEnvironment } from '../vk/vkBootstrap';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -12,16 +13,6 @@ function positiveIntFromUnknown(v: unknown): number | null {
     return Number.isFinite(n) && n > 0 ? Math.trunc(n) : null;
   }
   return null;
-}
-
-function isVkMiniAppWebView(): boolean {
-  try {
-    if (typeof vkBridge.isWebView === 'function') return vkBridge.isWebView();
-    if (typeof vkBridge.isEmbedded === 'function') return vkBridge.isEmbedded();
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export function invoiceUrlFromPaymentResponse(raw: unknown): string | null {
@@ -71,10 +62,88 @@ export async function openVkOrderPayment(raw: unknown): Promise<{ ok: true } | {
   }
 }
 
-/**
- * Открывает внешнюю оплату (ЮKassa и т.п.).
- * В VK WebView на телефоне `window.open` часто блокируется — используем VKWebAppOpenURL.
- */
+function openViaAnchor(url: string): boolean {
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function openViaWindow(url: string): boolean {
+  try {
+    const opened = window.open(url, '_blank', 'noopener,noreferrer');
+    return Boolean(opened);
+  } catch {
+    return false;
+  }
+}
+
+/** ЮKassa нельзя грузить во iframe (X-Frame-Options). В VK — только внешнее окно / браузер. */
+async function openExternalPaymentInVk(url: string): Promise<{ ok: true } | { error: string }> {
+  const init = ensureVkWebAppInit();
+  if (init) await init;
+
+  const send = vkBridge.send as BridgeSend;
+  const bridgeAttempts: Array<Record<string, unknown>> = [
+    { url },
+    { url, use_external_browser: 1 },
+    { url, use_external_browser: true },
+  ];
+
+  for (const props of bridgeAttempts) {
+    try {
+      await send('VKWebAppOpenURL', props);
+      return { ok: true };
+    } catch {
+      /* пробуем следующий вариант */
+    }
+    try {
+      await send('VKWebAppOpenLink', props);
+      return { ok: true };
+    } catch {
+      /* */
+    }
+  }
+
+  if (openViaAnchor(url)) return { ok: true };
+  if (openViaWindow(url)) return { ok: true };
+
+  try {
+    const top = window.top ?? window;
+    top.location.href = url;
+    return { ok: true };
+  } catch {
+    return {
+      error:
+        'Не удалось открыть оплату. Разрешите переход по ссылке или откройте приложение в клиенте VK.',
+    };
+  }
+}
+
+function openExternalPaymentInTelegram(url: string): { ok: true } | { error: string } {
+  const tg = window.Telegram?.WebApp;
+  if (tg && typeof tg.openLink === 'function') {
+    try {
+      tg.openLink(url);
+      return { ok: true };
+    } catch {
+      /* fallback */
+    }
+  }
+  if (openViaAnchor(url)) return { ok: true };
+  if (openViaWindow(url)) return { ok: true };
+  return { error: 'Не удалось открыть оплату во внешнем браузере.' };
+}
+
 /** Invoice Telegram Stars (`POST /createInvoiceStars` → `Telegram.WebApp.openInvoice`). */
 export async function openTelegramStarsInvoice(
   url: string,
@@ -106,35 +175,32 @@ function openTelegramInvoice(url: string): Promise<{ ok: true } | { error: strin
   });
 }
 
+/**
+ * Открывает внешнюю оплату (ЮKassa / yoomoney).
+ * Нельзя использовать `location.assign` внутри VK/Telegram iframe — страница оплаты блокируется.
+ */
 export async function openPaymentInvoiceUrl(url: string): Promise<{ ok: true } | { error: string }> {
   if (!url || !/^https?:\/\//i.test(url)) return { error: 'Некорректная ссылка на оплату.' };
 
-  if (isTelegramMiniAppEnvironment() && /t\.me\//i.test(url)) {
-    const tgResult = await openTelegramInvoice(url);
-    if ('ok' in tgResult && tgResult.ok) return tgResult;
-    /* fallback — открыть ссылку в WebView */
+  if (isTelegramMiniAppEnvironment()) {
+    if (/t\.me\//i.test(url)) {
+      const tgResult = await openTelegramInvoice(url);
+      if ('ok' in tgResult && tgResult.ok) return tgResult;
+    }
+    return openExternalPaymentInTelegram(url);
   }
 
-  if (isVkMiniAppWebView()) {
-    try {
-      const send = vkBridge.send as BridgeSend;
-      await send('VKWebAppOpenURL', { url });
-      return { ok: true };
-    } catch {
-      /* fallback ниже */
-    }
+  if (isVkClientEnvironment()) {
+    return openExternalPaymentInVk(url);
   }
+
+  if (openViaWindow(url)) return { ok: true };
+  if (openViaAnchor(url)) return { ok: true };
 
   try {
     window.location.assign(url);
     return { ok: true };
-  } catch {
-    try {
-      const opened = window.open(url, '_blank', 'noopener,noreferrer');
-      if (opened) return { ok: true };
-      return { error: 'Не удалось открыть окно оплаты. Разрешите всплывающие окна или откройте ссылку в браузере.' };
-    } catch (e) {
-      return { error: e instanceof Error ? e.message : 'Не удалось открыть оплату.' };
-    }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Не удалось открыть оплату.' };
   }
 }

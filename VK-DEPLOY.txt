@@ -39,12 +39,17 @@
 6) В настройках мини-приложения VK укажите URL с хостинга
    После деплоя VK выдаст адрес вида *.vk-apps.com — его нужно прописать в настройках приложения (адрес мини-приложения).
 
-7) Как делиться ссылкой с пользователями (ВАЖНО)
+7) Если в VK белый экран «Приложение не инициализировано»
+   - Открывать только через https://vk.com/app54570453 (не *.vk-apps.com в Safari).
+   - После правок с HashRouter и без telegram.org в index.html: npm run deploy:vk.
+   - В консоли не должно быть ошибки загрузки telegram-web-app.js.
+
+8) Как делиться ссылкой с пользователями (ВАЖНО)
    Правильно: https://vk.com/app54570453 (или кнопка «Открыть» в сообществе / раздел «Сервисы» в приложении VK).
    Неправильно: прямая ссылка на *.vk-apps.com в Safari / Telegram — откроется как обычный сайт в браузере, без VK Bridge и входа.
-   На разных iPhone разница не в модели iPhone, а в способе запуска (см. п. 8 — ODR).
+   На разных iPhone разница не в модели iPhone, а в способе запуска (см. п. 9 — ODR).
 
-8) iOS: ODR (On-Demand Resources) — нативный контейнер VK Mini Apps
+9) iOS: ODR (On-Demand Resources) — нативный контейнер VK Mini Apps
    ─────────────────────────────────────────────────────────────────
    Симптом: на части iPhone приложение открывается как m.vk.com во встроенном браузере VK,
    а не в «нормальном» мини-приложении (нет полноценного VK Bridge, другой UI).
@@ -79,6 +84,35 @@
    https://dev.vk.com/ru/mini-apps/development/on-demand-resources
 
 Официально (хостинг): https://dev.vk.ru/mini-apps/development/hosting/overview
+
+После "Uploaded version …!" деплой «висит» или ETIMEDOUT / ECONNRESET:
+   Архив УЖЕ на хостинге. vk-miniapps-deploy бесконечно опрашивает queuev4.vk.ru.
+   deploy:vk — обёртка ждёт очередь до 60 с и завершается сама.
+   Быстрый вариант (8 с после загрузки): npm run deploy:vk:fast
+   Без вопросов: npm run deploy:vk:auto
+   Проверка: https://vk.com/app54570453
+
+Ошибка "10: Internal server error" (и ReferenceError: r is not defined):
+   Первая строка — сбой VK API на apps.getGoHostingUploadServer (часто временный).
+   "r is not defined" — баг vk-miniapps-deploy, его можно игнорировать.
+
+   Что сделать:
+   1) Повторите через 15–30 минут: npm run deploy:vk
+   2) На вопросы отвечайте: deploy — yes, prod urls — yes, dev urls — yes,
+      test group — NO (не вводите «y», если нет реальной тест-группы в кабинете VK).
+   3) Лимит VK: не более ~24 загрузок в сутки на приложение.
+   4) Если снова 10: rm ~/.config/configstore/@vkontakte/vk-miniapps-deploy.json
+      и заново авторизуйтесь при deploy.
+   5) Без вопросов (только prod+dev, без test group):
+      npm run deploy:vk:auto
+
+Ошибка "15: Access denied: invalid file":
+   VK отклоняет файлы в ZIP: .DS_Store, .gitkeep, расширения .PNG (нужно .png),
+   лишние кадры в moon/phases (только gray_mb*_normal.png),
+   moon/8k_moon.jpg (>10 МБ) и любые файлы крупнее 10 МБ.
+   deploy:vk уже запускает prune + sanitize после сборки.
+   Вручную: npm run build:vk && node scripts/sanitize-vk-dist.mjs && npx vk-miniapps-deploy
+   После правок кадров луны один раз: node scripts/keep-only-gray-moon.mjs
 
 Ошибка "invalid session":
    rm ~/.config/configstore/@vkontakte/vk-miniapps-deploy.json

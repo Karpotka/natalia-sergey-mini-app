@@ -18,6 +18,8 @@ interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
   openInvoice: (url: string, callback?: (status: string) => void) => void;
+  /** Внешние ссылки (ЮKassa и т.п.) — во внешнем браузере, не во iframe. */
+  openLink?: (url: string, options?: { try_instant_view?: boolean }) => void;
   close: () => void;
   platform?: string;
   colorScheme?: 'light' | 'dark';

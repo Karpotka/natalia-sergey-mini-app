@@ -511,8 +511,8 @@ export function HoroscopePage() {
   };
 
   if (!horoscopeUnlocked) {
-    return (
-      <div className="product-page">
+  return (
+    <div className="product-page">
         <section className="product-hero product-hero--horoscope horoscope-gate">
           <h1>Астрология</h1>
           <p>
