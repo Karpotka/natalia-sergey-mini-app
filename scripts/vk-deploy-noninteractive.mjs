@@ -22,6 +22,7 @@ try {
   const r = spawnSync('node', ['scripts/vk-miniapps-deploy-resilient.mjs'], {
     stdio: 'inherit',
     shell: false,
+    env: { ...process.env },
   });
   exitCode = r.status ?? 1;
 } finally {

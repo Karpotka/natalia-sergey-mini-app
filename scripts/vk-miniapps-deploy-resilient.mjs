@@ -4,6 +4,9 @@
  * - при таймауте / ECONNRESET / ETIMEDOUT считаем деплой успешным (архив уже на хостинге).
  */
 import { spawn } from 'node:child_process';
+import path from 'node:path';
+
+const deployBin = path.join(process.cwd(), 'node_modules', '.bin', 'vk-miniapps-deploy');
 
 const UPLOADED_RE = /Uploaded version (\d+)!/;
 /** Сколько ждать ответ очереди после успешной загрузки ZIP. */
@@ -48,7 +51,7 @@ function forward(chunk, stream) {
   if (m) onUploaded(m[1]);
 }
 
-const child = spawn('vk-miniapps-deploy', {
+const child = spawn(deployBin, {
   stdio: ['inherit', 'pipe', 'pipe'],
   shell: false,
 });
