@@ -148,24 +148,24 @@
 
 .product-hero.consult-landing {
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   padding-bottom: 26px;
-  /* shell .product-hero { overflow: hidden } — не обрезать карточку эксперта по краям */
-  overflow-x: visible;
-  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .product-hero.consult-landing::before {
   content: '';
   position: absolute;
-  inset: -40% -20% auto;
-  height: min(52vh, 420px);
+  inset: 0;
+  height: 58%;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.5;
+  opacity: 0.45;
   background:
-    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(212, 175, 55, 0.16) 0%, transparent 58%),
-    radial-gradient(ellipse 50% 40% at 80% 20%, rgba(72, 120, 180, 0.1) 0%, transparent 50%);
+    radial-gradient(ellipse 80% 70% at 50% 0%, rgba(212, 175, 55, 0.16) 0%, transparent 62%),
+    radial-gradient(ellipse 45% 35% at 85% 15%, rgba(72, 120, 180, 0.08) 0%, transparent 55%);
 }
 
 .consult-landing-inner {
@@ -243,19 +243,22 @@
 .consult-expert-solo {
   position: relative;
   margin-top: 4px;
-  padding: 20px 16px 22px;
+  padding: 18px 14px 20px;
   border-radius: var(--celestial-radius-lg, 22px);
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 14px;
-  align-items: flex-start;
+  text-align: center;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   background: linear-gradient(165deg, rgba(12, 24, 52, 0.96) 0%, rgba(5, 12, 28, 0.98) 55%, rgba(4, 10, 28, 0.98) 100%);
   border: 1px solid var(--celestial-gold-border, rgba(212, 175, 55, 0.42));
   box-shadow: var(--celestial-shadow-card, 0 24px 56px rgba(0, 0, 0, 0.45)),
     inset 0 1px 0 rgba(212, 175, 55, 0.08);
-  overflow: visible;
+  overflow: hidden;
 }
 
 .consult-expert-solo::before {
@@ -316,8 +319,10 @@
 
 .consult-expert-solo-body {
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
   flex: 1;
-  padding-top: 2px;
+  padding-top: 0;
 }
 
 .consult-expert-solo-name {
@@ -350,7 +355,9 @@
 
 .consult-cta-primary {
   width: 100%;
+  max-width: 100%;
   margin: 0;
+  box-sizing: border-box;
 }
 
 .consult-footnote {
@@ -364,61 +371,54 @@
   border: 1px solid var(--celestial-gold-border-soft, rgba(212, 175, 55, 0.22));
 }
 
-/* Вкладка «Практики» (ConsultationsPage) — не обрезать низ у нижнего таббара */
+/* Вкладка «Практики» (ConsultationsPage) — только вертикальный скролл, без обрезки по X */
 .product-page--consult {
-  padding-bottom: 8px;
-  padding-left: max(12px, env(safe-area-inset-left, 0px));
-  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  padding: 8px max(10px, env(safe-area-inset-right, 0px)) 20px max(10px, env(safe-area-inset-left, 0px));
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
-  overflow-x: visible;
+  overflow-x: clip;
 }
 
-.product-panel--tarot {
-  overflow-x: visible;
+.product-panel.product-panel--tarot {
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior-x: none;
+  touch-action: pan-y pinch-zoom;
 }
 
 .product-panel--tarot .product-panel-inner {
   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-  overflow-x: visible;
-}
-
-.product-panel--tarot .product-page--consult {
-  padding-bottom: 20px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 
 .product-panel--tarot .product-hero--consult.consult-landing {
-  padding-left: 16px;
-  padding-right: 16px;
+  padding: 20px 14px 22px;
+  margin: 0;
 }
 
-@media (max-width: 480px) {
+.product-hero.consult-landing h1,
+.product-hero.consult-landing .consult-lead {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (min-width: 520px) {
   .consult-expert-solo {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding-top: 24px;
-    padding-left: 14px;
-    padding-right: 14px;
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    padding: 20px 18px 22px;
+    gap: 16px;
   }
 
   .consult-expert-solo-body {
-    padding-top: 0;
-  }
-
-  .consult-expert-solo-visual {
-    margin-bottom: 4px;
-  }
-
-  .consult-expert-solo-photo {
-    width: 120px;
-    height: 150px;
-  }
-
-  .consult-expert-solo-visual {
-    width: 120px;
-    height: 150px;
+    padding-top: 2px;
   }
 }
 
@@ -504,9 +504,11 @@ button.consult-expert-card--action:focus-visible {
   min-width: 0;
   flex-shrink: 0;
   max-height: min(92dvh, 720px);
-  overflow: auto;
+  overflow-x: clip;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  overscroll-behavior-x: none;
   touch-action: pan-y;
   border-radius: 24px 24px 0 0;
   padding: 18px max(16px, env(safe-area-inset-left)) max(22px, env(safe-area-inset-bottom))
@@ -591,6 +593,10 @@ button.consult-expert-card--action:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 .consult-form-textarea {

@@ -15,6 +15,7 @@ html {
   background-color: var(--celestial-bg-deep);
   color-scheme: dark;
   overscroll-behavior: none;
+  overflow-x: clip;
 }
 
 :root {
@@ -81,6 +82,7 @@ body {
   color: var(--shell-text);
   background-color: var(--celestial-bg-deep);
   overscroll-behavior: none;
+  overflow-x: clip;
 }
 
 html.app-has-celestial-bg,
@@ -106,6 +108,9 @@ html.app-has-celestial-bg #root {
 #root {
   min-height: 100%;
   min-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 code {

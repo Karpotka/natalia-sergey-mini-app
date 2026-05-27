@@ -526,7 +526,7 @@
 }
 
 .product-hero.product-hero--consult.consult-landing {
-  overflow: visible;
+  overflow: hidden;
 }
 
 .product-hero--learn {
